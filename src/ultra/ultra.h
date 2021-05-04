@@ -10,9 +10,20 @@ namespace ultra
 
 namespace fs = std::filesystem;
 
+/**
+ * @class Ultra
+ * 
+ * The class will generate CPP code from given PyTorch scripted model
+ */
 class Ultra 
 {
-    public:
+    public: // Standard methods
+        /**
+         * @brief Constructor
+         * @param module - JIT scripted PyTorch model.
+         * Load model's graph representation and prepare 
+         * for c++ code generation.
+         */
         explicit Ultra(torch::jit::script::Module module);
         ~Ultra() = default;
         Ultra(const Ultra&) = delete;
@@ -21,12 +32,26 @@ class Ultra
         Ultra& operator=(Ultra&&) = delete;
 
     public:
+        /**
+         * @brief Builds and save into the files c++ code
+         * @param w - directory where generated files will be saved
+         * The main steps are:
+         *      1. Traverse and collect all sufficient information.
+         *      2. Generate code from collected data.
+         *      3. Write into the files (gnerated file names are forward.cpp/.h)
+         * @note Generated forward.h will contain declartion of 'synthetic_forward'
+         *       function and definition correspondingly will be in the forward.cpp file.
+         *       The 'synthetic_forward' function will produce exactly the same outputs
+         *       as it does PyTorch model interpreter.
+         *       As final step CMake can build static library from those files, 
+         *       which later can be linked and used or directly build executable
+         *       (for demos this approach is used).
+         */
         void buildLibrary(const fs::path& w);
 
     private:
         void OptimizeGraph();
         void RemoveSelfFromGraphInput();
-
         void writeHPP(const fs::path& w);
         void writeCPP(const fs::path& w);
         void graphTraversal();
@@ -46,7 +71,6 @@ class Ultra
         void foldSizeLenGT();
         void foldDimNE();
         void foldDimEQ();
-
         
         void syntheticLib();
         void writeCMakeListsTxt();
@@ -62,17 +86,17 @@ class Ultra
         void constValueListWithTypes(const c10::ArrayRef<torch::jit::Value*> inputs) const;
 
     private:
-        torch::jit::script::Module module_;
-        std::shared_ptr<torch::jit::Graph> graph_;
-        std::unique_ptr<c10::FunctionSchema> schema_;
+        torch::jit::script::Module module_; // The model
+        std::shared_ptr<torch::jit::Graph> graph_; // graph extracted from model
+        std::unique_ptr<c10::FunctionSchema> schema_; // forward schema
         std::string declaration_;
-        std::string code_;
-        bool first_time_;
-        std::unordered_set<std::string> global_scope_;
-
-        static std::unordered_map<std::string, std::string> s_natives_;
-        static std::unordered_map<std::string, std::string> s_native_outs_;
-        static int s_phiLoop_id_;
+        std::string code_; // forward.cpp file's content
+        bool first_time_; // used for caching
+        std::unordered_set<std::string> global_scope_; // all global declarations/definitions
+        // Static members
+        static std::unordered_map<std::string, std::string> s_natives_; // map of aten::native ops
+        static std::unordered_map<std::string, std::string> s_native_outs_; // map of aten::native ops with 'out' versions
+        static int s_phiLoop_id_; // used for generate unique initial loop condition variable name
 };
 
 int forward(const std::string& workspace);

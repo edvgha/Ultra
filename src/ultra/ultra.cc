@@ -59,21 +59,23 @@ Ultra::Ultra(script::Module module)
 {
     try 
     {
+        // Set eval mode
         module_.eval();
+        // Freeze for optimization
         module_ = freeze_module(module_);
-
+        // Get forward method's graph representation
         graph_ = module_.get_method("forward").graph();
-
+        // Extract function schema
         const c10::FunctionSchema& s = module_.get_method("forward").function().getSchema();
         std::vector<Argument> args({s.arguments().begin() + 1, s.arguments().end()});
         schema_ =  std::make_unique<c10::FunctionSchema>(s.cloneWithArguments(args));
-
+        // Prepare for code generation
         OptimizeGraph();
         RemoveSelfFromGraphInput();
-        
         foldSizeLenGT();
         foldDimNE();
         foldDimEQ();
+        // Dump
         graph_ -> dump();
     }
     catch(std::exception& e)
@@ -84,6 +86,7 @@ Ultra::Ultra(script::Module module)
 
 void Ultra::OptimizeGraph()
 {
+    // Apply optimization passes
     Inline(*graph_);
     ConstantPropagation(graph_);
     Canonicalize(graph_);
@@ -125,7 +128,6 @@ void Ultra::writeCPP(const fs::path& w)
 void Ultra::buildLibrary(const fs::path& w)
 {
     // Generate source code
-    // auto code = generateCPPForwardCode();
     graphTraversal();
 
     if (w.empty())

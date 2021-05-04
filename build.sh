@@ -1,6 +1,6 @@
 #!/bin/bash
 
-## check existence of libtorch
+## Check existence of libtorch
 if [ ! -d "ext/libtorch" ] 
 then
     echo "Downloading libtorch ..."

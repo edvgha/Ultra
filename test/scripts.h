@@ -125,6 +125,3 @@ const auto aten_sum_1_true = R"JIT(
   def forward(self, input):
       return torch.sum(input, 1, True)
 )JIT";
-
-const auto ir_lstm_cell = R"JIT(
-)JIT";
