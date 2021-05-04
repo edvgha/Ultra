@@ -8,7 +8,7 @@ Currently build only tested on macOS Big Sur Version 11.3 and supported libtorch
 
 ## Build
 
-./build.sh
+From project root run: ./build.sh
 
 ## Tests 
 TODO
