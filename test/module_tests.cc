@@ -2,7 +2,6 @@
 #include <torch/csrc/jit/serialization/import_source.h>
 #include <torch/script.h>
 #include <torch/torch.h>
-#include <glog/logging.h>
 
 namespace {
 
@@ -80,9 +79,7 @@ torch::jit::Module getDeepAndWideSciptModel(int num_features)
 }
 
 int main(int argc, char** argv)
-{
-  google::InitGoogleLogging(argv[0]);
-  
+{  
   torch::jit::Module deepAndWide = getDeepAndWideSciptModel(50);
   ultra::Ultra u(deepAndWide);
   ultra::fs::path p;

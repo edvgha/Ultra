@@ -8,7 +8,7 @@ using namespace torch::jit;
 
 void Ultra::foldSizeLenGT()
 {
-
+    // The functionality is not important since we are not going to execute graph
     auto registrar = c10::RegisterOperators().op("Ultra::size_len_gt", 
                                                  c10::RegisterOperators::options().kernel(at::DispatchKey::CPU, 
                                                  [] (at::Tensor&, int64_t& i) -> bool {return true;}));
@@ -33,7 +33,7 @@ void Ultra::foldSizeLenGT()
 
 void Ultra::foldDimNE()
 {
-
+    // The functionality is not important since we are not going to execute graph
     auto registrar = c10::RegisterOperators().op("Ultra::dim_ne", 
                                                  c10::RegisterOperators::options().kernel(at::DispatchKey::CPU, 
                                                  [] (at::Tensor&, int64_t& i) -> bool {return true;}));
@@ -57,7 +57,7 @@ void Ultra::foldDimNE()
 
 void Ultra::foldDimEQ()
 {
-
+    // The functionality is not important since we are not going to execute graph
     auto registrar = c10::RegisterOperators().op("Ultra::dim_eq", 
                                                  c10::RegisterOperators::options().kernel(at::DispatchKey::CPU, 
                                                  [] (at::Tensor&, int64_t& i) -> bool {return true;}));

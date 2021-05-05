@@ -72,6 +72,8 @@ Ultra::Ultra(script::Module module)
         // Prepare for code generation
         OptimizeGraph();
         RemoveSelfFromGraphInput();
+        // Some foldings which helps 
+        // to more easly generate code
         foldSizeLenGT();
         foldDimNE();
         foldDimEQ();
@@ -86,7 +88,7 @@ Ultra::Ultra(script::Module module)
 
 void Ultra::OptimizeGraph()
 {
-    // Apply optimization passes
+    // Apply optimization passes from jit/passes
     Inline(*graph_);
     ConstantPropagation(graph_);
     Canonicalize(graph_);
@@ -108,7 +110,6 @@ void Ultra::RemoveSelfFromGraphInput()
 
 void Ultra::writeHPP(const fs::path& w)
 {
-    LOG(INFO) << "Generate HPP";
     fs::path p = w;
     p /= "forward.h";
     std::ofstream(p) << "#include <ATen/ATen.h>\n"
@@ -119,7 +120,6 @@ void Ultra::writeHPP(const fs::path& w)
 }
 void Ultra::writeCPP(const fs::path& w)
 {
-    LOG(INFO) << "Generate CPP";
     fs::path p = w;
     p /= "forward.cpp";
     std::ofstream(p) << code_;
@@ -144,17 +144,16 @@ void Ultra::graphTraversal()
 {
     std::ostringstream fwd;
     fwd << "\n\n";
-    auto inputs = graph_ -> block() -> inputs();
+    // Get outputs
     auto outputs = graph_ -> block() -> outputs();
-
+    // Return type
     if (outputs.size() == 1) 
     {
-        LOG(INFO) << "Process return type";
         fwd << type(outputs[0] -> type());
     }
     else 
-    {
-        LOG(INFO) << "Process return type";
+    {   
+        // aggregate outputs into tuple
         fwd << "std::tuple<";
         for (size_t i = 0; i < outputs.size(); ++i)
         {
@@ -167,8 +166,11 @@ void Ultra::graphTraversal()
         fwd << ">";
     }
 
+    // Generated function name
     fwd << " synthetic_forward (";
-    LOG(INFO) << "Process arguments";
+    // Get inputs
+    auto inputs = graph_ -> block() -> inputs();
+    // Generate arguments for synthetic_forward
     for (size_t i = 0; i < inputs.size(); ++i)
     {
         fwd << *inputs[i] -> type() << "& " << normalizeName(inputs[i] -> debugName());
@@ -177,9 +179,12 @@ void Ultra::graphTraversal()
             fwd << ", ";
         }
     }
+    // Save declaration to write in hpp file
     declaration_ = fwd.str() + ");";
+    // Continute cpp part
     fwd << ") \n{\n";
-
+    // Add guard to optimize runtime
+    // TODO for new versions use "InferenceMode guard(true)"
     fwd << "\tNoGradGuard no_grad;\n\n";
 
     /*
@@ -193,19 +198,17 @@ void Ultra::graphTraversal()
     size_t level = 1;
     fwd << std::string(2 * level, ' ');
     fwd << "if (first_time) {\n";
-    LOG(INFO) << "Process TRUE body";
     fwd << blockTraversal(graph_ -> block(), level + 1);
     fwd << std::string(2 * (level + 1), ' ');
     fwd << "first_time = false;\n";
     fwd << std::string(2 * level, ' ');
     fwd << "} else {\n";
     first_time_ = false;
-    LOG(INFO) << "Process FALSE body";
     fwd << blockTraversal(graph_ -> block(), level + 1);
     fwd << std::string(2 * level, ' ');
     fwd << "}\n";
-    LOG(INFO) << "Process RETURN statement";
     fwd << std::string(2 * level, ' ');
+    // Generate last 'return' statement
     if (outputs.size() == 1) 
     {
         if (outputs[0] -> type() -> isSubtypeOf(ListType::ofTensors()) or
@@ -233,21 +236,22 @@ void Ultra::graphTraversal()
         fwd << ");\n";
     }
     fwd << "}\n";
-
+    // Includes
     std::ostringstream includes;
     includes << "#include \"forward.h\"\n";
     includes << "#include <ATen/core/grad_mode.h>\n\n";
-
+    // Declare global flag for caching
     std::ostringstream gScope;
     gScope << "bool first_time = true;\n\n";
     for (const auto & e : global_scope_)
     {
         gScope << e << "\n";
     }
-
+    // Aggregate all parts together 
     code_ = includes.str() + gScope.str() + fwd.str();
 }
  
+// Make names c++ friendly
 std::string Ultra::normalizeName(const std::string& name) const
 {
     auto s = 'g' + name;
@@ -303,19 +307,24 @@ std::string Ultra::type(const at::TypePtr& tPtr)
 
 std::string Ultra::primNode(Node* node, size_t level)
 {
-    LOG(INFO) << "Process primNode " << node -> kind() . toQualString();
-    std::cout << "Process primNode " << node -> kind() . toUnqualString() << std::endl;
     std::ostringstream oss;
     
     if (node -> kind() == prim::Constant)
     {
         if (node -> hasAttributes()) 
         {
+            // Add constants into global scope which will help to
+            // declare/define constants only once and use for all 
+            // 'forward' calls
+            // Example: 
+            // Input:  %6 : float = prim::Constant[value=10.]()
+            // Output: const float g6 = 10;
             global_scope_.insert(primConstantAttributes(node, 0));
         } 
         else
         {
-            // None
+            // Input: None = prim::Constant()
+            // Output: undefined tensor
             oss << "const Tensor " << normalizeName(node -> outputs()[0] -> debugName()) << " = {};\n";
             global_scope_.insert(oss.str());
         }
@@ -323,8 +332,12 @@ std::string Ultra::primNode(Node* node, size_t level)
     }
     else if (node -> kind() == prim::ListConstruct or node -> kind() == prim::TupleConstruct)
     {
+        // Converts 
+        // prim::ListConstruct into std::vector 
+        // prim::TupleConstruct into std::tuple
         oss << std::string(2 * level, ' ');
-        TORCH_CHECK(node -> outputs().size() == 1, "Expected number of outputs for prim::ListConstruct is one.");
+        TORCH_CHECK(node -> outputs().size() == 1, 
+            "Expected number of outputs for prim::ListConstruct is one.");
         auto out = node -> outputs()[0];
 
         std::stringstream ss;
@@ -359,6 +372,8 @@ std::string Ultra::primNode(Node* node, size_t level)
     } 
     else if (std::string(node -> kind() . toQualString()) == "Ultra::size_len_gt")
     {
+        // Converts %a : bool = Ultra::size_len_gt(%b, %c) into bool a = b.ndimension() > c;
+        // TODO probably there is aten::native version for ndimension()
         oss << std::string(2 * level, ' ');
         auto out = node -> outputs()[0];
 
@@ -369,6 +384,8 @@ std::string Ultra::primNode(Node* node, size_t level)
     }
     else if (std::string(node -> kind() . toQualString()) == "Ultra::dim_ne")
     {
+        // Converts %a : bool = Ultra::dim_ne(%b, %c) into bool a = b.ndimension() != c;
+        // TODO probably there is aten::native version for ndimension()
         oss << std::string(2 * level, ' ');
         auto out = node -> outputs()[0];
 
@@ -379,6 +396,8 @@ std::string Ultra::primNode(Node* node, size_t level)
     }
     else if (std::string(node -> kind() . toQualString()) == "Ultra::dim_eq")
     {
+        // Converts %a : bool = Ultra::dim_eq(%b, %c) into bool a = b.ndimension() == c;
+        // TODO probably there is aten::native version for ndimension()
         oss << std::string(2 * level, ' ');
         auto out = node -> outputs()[0];
 
@@ -500,13 +519,13 @@ std::string Ultra::phiNode(Node* node, size_t level)
 
     if (node -> kind() == prim::Loop) 
     {
-        int id = ++s_phiLoop_id_;
+        // Converts prim::Loop into while loop statement
+        int id = ++s_phiLoop_id_; // can be more than one loops in owner block
         TORCH_CHECK(node -> blocks().size() == 1, "expected 1 block for prim::Loop");
         auto primLoopBlock = node -> blocks()[0];
         auto blockInputs = node -> blocks()[0] -> inputs();
         auto blockOutputs = node -> blocks()[0] -> outputs();
         auto trip_count = normalizeName(blockInputs[0] -> debugName());
-
 
         auto max_trip_count = node -> input(0);
         auto initial_condition = node -> input(1);
@@ -595,7 +614,7 @@ std::string Ultra::phiNode(Node* node, size_t level)
         }
         else if (node -> blocks().size() == 1) // if
         {
-
+            std::cerr << "VALOD >>>>>> " << std::endl;
         } 
         else 
         {
@@ -609,14 +628,17 @@ std::string Ultra::blockTraversal(Block* block, size_t level)
 {
     std::ostringstream oss;
 
+    // Process block's nodes
     for (auto node : block -> nodes())
     {
         if (0 == node -> blocks().size())
         {
+            // Process primitive node (simple instruction)
             oss << primNode(node, level);
         }
         else
         {
+            // Process control flow instructions
             oss << phiNode(node, level);
         }
     }
