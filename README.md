@@ -6,7 +6,12 @@ The main goal of Ultra is speed up prediction for PyTorch based models.
 
 ## Build
 
-From project root run: ./build.sh
+From project root do : 
+1. For the first time fetch and extract libtorch in 'ext' directory by running **get_libtorch.sh**
+2. **mkdir build ; cd build**
+3. **cmake ..**
+4. **make -j**
+5. **make test (optional)**
 
 ## Demo 
 TODO
