@@ -414,9 +414,9 @@ std::string Ultra::primNode(Node* node, size_t level)
     // generate primitive instruction 
     if (allArgsScalar(node))
     {
+        // TODO not implemented yet
         // if op's arguments are scalar no need to use aten library
         // oss << scalarArgsOp(node, level);
-        //return;
     }
     if (first_time_) 
     {
@@ -432,6 +432,7 @@ std::string Ultra::primNode(Node* node, size_t level)
 
 bool Ultra::allArgsScalar(Node* node)
 {
+    // TODO not implemented yet
     return false;
     // Checks if all arguments are integral types
     auto primIns = node -> inputs();
@@ -544,11 +545,11 @@ std::string Ultra::atNativeOut(Node* node, size_t level)
 bool Ultra::extraConditionsOn(Node* node)
 {
     // second input should be tensor for 'mul' node
-    if (std::string(node -> kind() . toUnqualString()) == "mul" and 
-        node->inputs()[1]->type()->kind() == TypeKind::TensorType) {
-        return true;       
+    if (std::string(node -> kind() . toUnqualString()) == "mul") 
+    {
+        return node->inputs()[1]->type()->kind() == TypeKind::TensorType ? true : false;
     }
-    return false;
+    return true;
 }
 
 void Ultra::handleNonePrimConstant(Node* node, size_t arg_index) 
