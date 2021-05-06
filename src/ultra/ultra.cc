@@ -125,7 +125,7 @@ void Ultra::writeCPP(const fs::path& w)
     std::ofstream(p) << code_;
 }
 
-void Ultra::buildLibrary(const fs::path& w)
+std::optional<std::string> Ultra::buildLibrary(const fs::path& w)
 {
     // Generate source code
     graphTraversal();
@@ -133,11 +133,12 @@ void Ultra::buildLibrary(const fs::path& w)
     if (w.empty())
     {
         // For testing
-        return ;
+        return std::make_optional<std::string>(code_);
     }
     // write to files
     writeCPP(w);
     writeHPP(w);
+    return std::nullopt;
 }
 
 void Ultra::graphTraversal() 
@@ -323,10 +324,8 @@ std::string Ultra::primNode(Node* node, size_t level)
         } 
         else
         {
-            // Input: None = prim::Constant()
-            // Output: undefined tensor
-            oss << "const Tensor " << normalizeName(node -> outputs()[0] -> debugName()) << " = {};\n";
-            global_scope_.insert(oss.str());
+            // None = prim::Constant()
+            // this cases handled in handleNonePrimConstant
         }
         return "";
     }
@@ -456,6 +455,7 @@ std::string Ultra::atNative(Node* node, size_t level)
 
     for (size_t i = 0; i < inSize; ++i)
     {
+        handleNonePrimConstant(node, i);
         oss << normalizeName(primIns[i] -> debugName());
         if (i != inSize - 1)
         {
@@ -479,7 +479,7 @@ std::string Ultra::atNativeOut(Node* node, size_t level)
     auto primIns = node -> inputs();
     size_t inSize = primIns.size();
     
-    if (s_native_outs_.count(std::string(node -> kind() . toUnqualString())))
+    if (s_native_outs_.count(std::string(node -> kind() . toUnqualString())) && extraConditionsOn(node))
     {
         oss << std::string(2 * level, ' ');
         oss << "native::" << s_native_outs_[std::string(node -> kind() . toUnqualString())] << " (";
@@ -503,14 +503,71 @@ std::string Ultra::atNativeOut(Node* node, size_t level)
     
     for (size_t i = 0; i < inSize; ++i)
     {
+        handleNonePrimConstant(node, i);
         oss << normalizeName(primIns[i] -> debugName());
         if (i != inSize - 1)
-        {
+        {   
             oss << ", ";
         }
     }
     oss << ");\n";
     return oss.str();
+}
+
+bool Ultra::extraConditionsOn(Node* node)
+{
+    // second input should be tensor for 'mul' node
+    if (std::string(node -> kind() . toUnqualString()) == "mul" and 
+        node->inputs()[1]->type()->kind() == TypeKind::TensorType) {
+        return true;       
+    }
+    return false;
+}
+
+void Ultra::handleNonePrimConstant(Node* node, size_t arg_index) 
+{
+    if (node -> inputs()[arg_index] -> node() -> kind() != prim::Constant)
+    {
+        return ;
+    }
+    if (node -> inputs()[arg_index] -> node() -> hasAttributes()) 
+    {
+        return ;
+    }
+    // We have  %x : None = prim::Constant() 
+
+    // Get underlying type from FunctionSchema and map to c++ equivalent 
+    const FunctionSchema* the_schema = node -> maybeSchema();
+    if (the_schema) {
+        std::ostringstream oss;
+        const Argument arg = the_schema -> arguments()[arg_index];
+        if (arg.type() -> kind() == TypeKind::OptionalType)
+        {
+            if (arg.type() -> cast<OptionalType>() -> getElementType() -> kind() == TypeKind::TensorType)
+            {
+                oss << "const Tensor " << normalizeName(node -> inputs()[arg_index] -> node() -> outputs()[0] -> debugName()) << " = {};\n";
+                global_scope_.insert(oss.str());
+            }
+            else 
+            {
+                node -> dump();
+                TORCH_CHECK(false, "NonePrimConstant not supported yet.");
+            }
+        } 
+        else
+        {
+            node -> dump();
+            TORCH_CHECK(false, "NonePrimConstant not supported yet.");
+        }
+    } 
+    else
+    {
+        node -> dump();
+        std::stringstream ss;
+        ss << node -> kind() . toQualString() << " has no schema.";
+        TORCH_CHECK(false, ss.str());
+    }
+
 }
 
 std::string Ultra::phiNode(Node* node, size_t level)
@@ -614,7 +671,7 @@ std::string Ultra::phiNode(Node* node, size_t level)
         }
         else if (node -> blocks().size() == 1) // if
         {
-            std::cerr << "VALOD >>>>>> " << std::endl;
+            // Pass (converted into if-else)
         } 
         else 
         {

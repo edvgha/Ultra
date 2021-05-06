@@ -1,7 +1,7 @@
 #pragma once 
 
 const auto ir_if = R"JIT(
-  def forward(self, x, y):
+  def forward(self, x : Tensor, y : bool):
       if y :
         return 2 * x
       else:
@@ -9,7 +9,7 @@ const auto ir_if = R"JIT(
 )JIT";
 
 const auto ir_if_1 = R"JIT(
-  def forward(self, x, y):
+  def forward(self, x : Tensor, y : bool):
       if y :
         return 2 + x
       return torch.sum(x, 1, True)

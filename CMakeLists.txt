@@ -23,6 +23,7 @@ include_directories(${ULTRA_HEADERS_DIR})
 add_subdirectory(src)
 enable_testing()
 add_subdirectory(test)
+add_subdirectory(testM)
 
 add_subdirectory(DeepAndWide)
 add_subdirectory(Resnet18)

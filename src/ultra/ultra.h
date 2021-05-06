@@ -46,7 +46,7 @@ class Ultra
          *       which later can be linked and used or directly build executable
          *       (for demos this approach is used).
          */
-        void buildLibrary(const fs::path& w);
+        std::optional<std::string> buildLibrary(const fs::path& w);
 
     private:
         // Prepare graph
@@ -96,7 +96,7 @@ class Ultra
         // https://github.com/pytorch/pytorch/blob/master/torch/csrc/jit/OVERVIEW.md#block
         // 'prim::With' is not supported yet
         std::string phiNode(torch::jit::Node* node, size_t level);
-        
+
         std::string primConstantAttributes(const torch::jit::Node* node, size_t level);
         std::string primConstantAttributesValue(const torch::jit::Node* node, const torch::jit::Symbol& name, size_t level);
         std::string ivalue(const torch::jit::Value* output, const c10::IValue& v, size_t level);
@@ -106,6 +106,8 @@ class Ultra
         std::string constantInitData(const at::Tensor& tensor);
         std::string atNative(torch::jit::Node* node, size_t level);
         std::string atNativeOut(torch::jit::Node* node, size_t level);
+        bool extraConditionsOn(torch::jit::Node* node);
+        void handleNonePrimConstant(torch::jit::Node* node, size_t arg_index);
         
         
         void syntheticLib();
