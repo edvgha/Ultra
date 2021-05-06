@@ -20,9 +20,7 @@ void test(const std::string& name, const std::string& name_out)
     ultra::Ultra u(module);
     ultra::fs::path p;
     std::optional<std::string> r = u.buildLibrary(p);
-    // std::cerr << r.value() << std::endl;
     TORCH_CHECK(r.has_value());
-    // auto rr = modifyForTest(std::move(r.value()));
     TORCH_CHECK(modifyForTest(std::move(r.value())) == name_out)
 }
 

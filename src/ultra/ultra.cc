@@ -411,7 +411,7 @@ std::string Ultra::primNode(Node* node, size_t level)
         TORCH_CHECK(false, "node -> hasAttributes()is not supported yet");
     }
 
-    // generate primitive instruction 
+    // Generate primitive instruction 
     if (allArgsScalar(node))
     {
         // TODO not implemented yet
@@ -420,10 +420,15 @@ std::string Ultra::primNode(Node* node, size_t level)
     }
     if (first_time_) 
     {
+        // For the first call try to use aten::native verion
+        // which will reduce PyTorch dispatcher overhead
         oss << atNative(node, level);
     }
     else 
     {
+        // If there is equivalent 'out' version use if, 
+        // it will help to reduce allocation/deallocation
+        // of output tensors which have created during first call
         oss << atNativeOut(node, level);
     }
 
@@ -454,6 +459,21 @@ bool Ultra::allArgsScalar(Node* node)
 
 std::string Ultra::atNative(Node* node, size_t level)
 {
+    // Here aten::native functions will be generated 
+    // without considering out variants , 
+    // since this is first time call.
+    // Output of this OPs is a newly created tensors
+    // and will be assigned into globally visible tensor variables
+    // Which allow us to reuse in subsequent calls.
+    // Tensor x;
+    // if (first_time)
+    // {
+    //     x = aten::add(...);
+    // } 
+    // else
+    // {
+    //     aten::add_out(x, ...);
+    // }
     std::ostringstream oss;
 
     auto outs = node -> outputs();
@@ -463,10 +483,14 @@ std::string Ultra::atNative(Node* node, size_t level)
     
     auto primOut = outs[0];
     
+    // Gets declaration of OP's output
+    // For example if %a = aten::add(....) then
+    // in the global scope we will generate: "Tensor g_a;"
     std::stringstream ss;
     ss << *primOut -> type() << " " << normalizeName(primOut -> debugName()) << ";\n";
     global_scope_.insert(ss.str());
 
+    // Gets OP's C++ equivalent API
     oss << std::string(2 * level, ' ');
     oss << normalizeName(primOut -> debugName()) << " = ";
     if (s_natives_.count(std::string(node -> kind() . toUnqualString())))
@@ -478,11 +502,16 @@ std::string Ultra::atNative(Node* node, size_t level)
         oss << node -> kind() . toUnqualString() << " (";
     }
     
+    // Process inputs.
+    // Since input is uniquely identified , 
+    // and graph is SSAed, task is here 
+    // just line them up.
     auto primIns = node -> inputs();
     size_t inSize = primIns.size();
 
     for (size_t i = 0; i < inSize; ++i)
     {
+        // Case where input is None
         handleNonePrimConstant(node, i);
         oss << normalizeName(primIns[i] -> debugName());
         if (i != inSize - 1)
@@ -496,6 +525,9 @@ std::string Ultra::atNative(Node* node, size_t level)
 
 std::string Ultra::atNativeOut(Node* node, size_t level)
 {
+    // Try to use 'out' variant of OP
+    // in that case we will reduce number 
+    // of allocs/deallocs for tensors.
     std::ostringstream oss;
 
     auto outs = node -> outputs();
@@ -507,6 +539,7 @@ std::string Ultra::atNativeOut(Node* node, size_t level)
     auto primIns = node -> inputs();
     size_t inSize = primIns.size();
     
+    // Prefer native out version of op
     if (s_native_outs_.count(std::string(node -> kind() . toUnqualString())) && extraConditionsOn(node))
     {
         oss << std::string(2 * level, ' ');
@@ -516,12 +549,14 @@ std::string Ultra::atNativeOut(Node* node, size_t level)
             oss << ", ";
         }
     }
+    // Prefer native version
     else if (s_natives_.count(std::string(node -> kind() . toUnqualString())))
     {
         oss << std::string(2 * level, ' ');
         oss << normalizeName(primOut -> debugName()) << " = ";
         oss << "native::" << s_natives_[std::string(node -> kind() . toUnqualString())] << " (";
     }
+    // If we failed to get 'native out' and 'native' versions go with sandard one
     else 
     {
         oss << std::string(2 * level, ' ');
@@ -529,8 +564,13 @@ std::string Ultra::atNativeOut(Node* node, size_t level)
         oss << node -> kind() . toUnqualString() << " (";
     }
     
+    // Process inputs.
+    // Since input is uniquely identified , 
+    // and graph is SSAed, task is here 
+    // just line them up.
     for (size_t i = 0; i < inSize; ++i)
     {
+        // Case where input is None
         handleNonePrimConstant(node, i);
         oss << normalizeName(primIns[i] -> debugName());
         if (i != inSize - 1)
@@ -573,12 +613,16 @@ void Ultra::handleNonePrimConstant(Node* node, size_t arg_index)
         {
             if (arg.type() -> cast<OptionalType>() -> getElementType() -> kind() == TypeKind::TensorType)
             {
-                oss << "const Tensor " << normalizeName(node -> inputs()[arg_index] -> node() -> outputs()[0] -> debugName()) << " = {};\n";
+                oss << "const Tensor " 
+                    << normalizeName(node -> inputs()[arg_index] -> node() -> outputs()[0] -> debugName()) 
+                    << " = {};\n";
                 global_scope_.insert(oss.str());
             }
             else 
             {
-                oss << "c10::optional<ScalarType> " << normalizeName(node -> inputs()[arg_index] -> node() -> outputs()[0] -> debugName()) << " = c10::nullopt;\n";
+                oss << "c10::optional<ScalarType> " 
+                    << normalizeName(node -> inputs()[arg_index] -> node() -> outputs()[0] -> debugName()) 
+                    << " = c10::nullopt;\n";
                 global_scope_.insert(oss.str());
             }
         } 

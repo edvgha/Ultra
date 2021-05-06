@@ -96,15 +96,14 @@ class Ultra
         // https://github.com/pytorch/pytorch/blob/master/torch/csrc/jit/OVERVIEW.md#block
         // 'prim::With' is not supported yet
         std::string phiNode(torch::jit::Node* node, size_t level);
-
-        std::string primConstantAttributes(const torch::jit::Node* node, size_t level);
-        std::string primConstantAttributesValue(const torch::jit::Node* node, const torch::jit::Symbol& name, size_t level);
-        std::string ivalue(const torch::jit::Value* output, const c10::IValue& v, size_t level);
-        std::string type(const at::TypePtr& tPtr);
-        std::string primConstantTensor(const at::Tensor& t, const torch::jit::Node* node, size_t level);
-        std::tuple<std::string, std::string> cppTypeFrom(const at::ScalarType& st);
-        std::string constantInitData(const at::Tensor& tensor);
+        // Try to generates aten::native function
+        // otherwise standard c++ function provided by torchlib
+        // for a given graph node.
         std::string atNative(torch::jit::Node* node, size_t level);
+        // At first trying to generate 'aten::native functions with out version
+        // if there is some, else will try to generate 'aten::native' one
+        // otherwise standard c++ function provided by torchlib
+        // for a given graph node.
         std::string atNativeOut(torch::jit::Node* node, size_t level);
         // Some corner case conditions for OP's overloading
         bool extraConditionsOn(torch::jit::Node* node);
@@ -114,7 +113,13 @@ class Ultra
         // True if all arugments are integral types otherwise False
         bool allArgsScalar(torch::jit::Node* node);
 
-        
+        std::string primConstantAttributes(const torch::jit::Node* node, size_t level);
+        std::string primConstantAttributesValue(const torch::jit::Node* node, const torch::jit::Symbol& name, size_t level);
+        std::string ivalue(const torch::jit::Value* output, const c10::IValue& v, size_t level);
+        std::string type(const at::TypePtr& tPtr);
+        std::string primConstantTensor(const at::Tensor& t, const torch::jit::Node* node, size_t level);
+        std::tuple<std::string, std::string> cppTypeFrom(const at::ScalarType& st);
+        std::string constantInitData(const at::Tensor& tensor);        
         
         void syntheticLib();
         void writeCMakeListsTxt();
