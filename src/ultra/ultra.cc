@@ -411,7 +411,13 @@ std::string Ultra::primNode(Node* node, size_t level)
         TORCH_CHECK(false, "node -> hasAttributes()is not supported yet");
     }
 
-    // generate primitive instruction
+    // generate primitive instruction 
+    if (allArgsScalar(node))
+    {
+        // if op's arguments are scalar no need to use aten library
+        // oss << scalarArgsOp(node, level);
+        //return;
+    }
     if (first_time_) 
     {
         oss << atNative(node, level);
@@ -422,6 +428,27 @@ std::string Ultra::primNode(Node* node, size_t level)
     }
 
     return oss.str();
+}
+
+bool Ultra::allArgsScalar(Node* node)
+{
+    return false;
+    // Checks if all arguments are integral types
+    auto primIns = node -> inputs();
+    size_t inSize = primIns.size();
+    for (size_t i = 0; i < inSize; ++i) 
+    {
+        // try to fetch type from argument's attribute
+        // std::cerr << primIns[i] -> node() -> hasAttributes() << std::endl;
+        bool b1 = primIns[i] -> type() -> kind() == TypeKind::BoolType;
+        bool b2 = primIns[i] -> type() -> kind() == TypeKind::FloatType;
+        bool b3 = primIns[i] -> type() -> kind() == TypeKind::IntType;
+        if (not b1 or not b2 or not b3)
+        {
+            return false;
+        }
+    }
+    return true;
 }
 
 std::string Ultra::atNative(Node* node, size_t level)
@@ -550,8 +577,8 @@ void Ultra::handleNonePrimConstant(Node* node, size_t arg_index)
             }
             else 
             {
-                node -> dump();
-                TORCH_CHECK(false, "NonePrimConstant not supported yet.");
+                oss << "c10::optional<ScalarType> " << normalizeName(node -> inputs()[arg_index] -> node() -> outputs()[0] -> debugName()) << " = c10::nullopt;\n";
+                global_scope_.insert(oss.str());
             }
         } 
         else

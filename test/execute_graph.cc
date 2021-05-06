@@ -34,17 +34,13 @@ void test_functional(const std::string& name, const std::vector<c10::IValue>& in
         }
     }
 }
-
-void exe_ir_if()
-{
-    test_functional(tuple_construct_script, {at::randn({3, 3}), at::randn({3, 3})});
-}
-
 }
 
 int main(int argc, char** argv)
 {
     test_functional(ir_if, {at::ones({2, 2}), true});
     test_functional(ir_if, {at::ones({2, 2}), false});
+    test_functional(ir_if_1, {at::ones({2, 2}), true});
+    test_functional(ir_if_1, {at::ones({2, 2}), false});
     return 0;
 }

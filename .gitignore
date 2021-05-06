@@ -1,2 +1,8 @@
 .vscode/
 .DS_Store
+DeepAndWide/forward.cpp
+DeepAndWide/forward.h
+Resnet18/forward.cpp
+Resnet18/forward.h
+build/
+ext/

@@ -16,7 +16,37 @@ const auto ir_if_1 = R"JIT(
 )JIT";
 
 const auto ir_if_2 = R"JIT(
-  def forward(self, x, y):
+  def forward(self, x : Tensor, y : int):
+      if y > 0 :
+        return 2 + x
+      elif y < 0:
+        return 2 * x
+      else:
+        return x - 4
+)JIT";
+
+const auto ir_if_3 = R"JIT(
+  def forward(self, x : Tensor, y : bool):
+      if y > 0 :
+        return 2 + x
+      elif y < 0:
+        return 2 * x
+      else:
+        return x - 4
+)JIT";
+
+const auto ir_if_4 = R"JIT(
+  def forward(self, x : Tensor, y : double):
+      if y > 0 :
+        return 2 + x
+      elif y < 0:
+        return 2 * x
+      else:
+        return x - 4
+)JIT";
+
+const auto ir_if_5 = R"JIT(
+  def forward(self, x : Tensor, y : float):
       if y > 0 :
         return 2 + x
       elif y < 0:

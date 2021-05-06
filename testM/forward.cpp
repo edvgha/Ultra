@@ -3,45 +3,67 @@
 
 bool first_time = true;
 
-const Tensor g3 = {};
+Tensor g12;
 
-Tensor g10;
+bool g10;
+
+Tensor g9;
 
 Tensor g8;
 
-Tensor g7;
+Tensor g11;
 
-const bool g4 = 1;
+bool g7;
+
+const int g3 = 1;
+
+const int g4 = 0;
 
 const int g5 = 2;
 
-const int g6 = 1;
+Tensor g13;
 
-const std::array<int64_t, 1> g11 = {1};
+const int g6 = 4;
 
 
 
-Tensor synthetic_forward (Tensor& gx_1, bool& gy_1) 
+Tensor synthetic_forward (Tensor& gx_1, int& gy_1) 
 {
 	NoGradGuard no_grad;
-  /*
+
   if (first_time) {
-    if (gy_1) {
-      g8 = native::add (gx_1, g5, g6);
-      g7 = g8;
+    g7 = gy_1 > g4;
+    if (g7) {
+      g9 = native::add (gx_1, g5, g3);
+      g8 = g9;
     } else {
-      g10 = sum (gx_1, g11, g4, g3);
-      g7 = g10;
+      g10 = gy_1 < g4;
+      if (g10) {
+        g12 = native::mul (gx_1, g5);
+        g11 = g12;
+      } else {
+        g13 = sub (gx_1, g6, g3);
+        g11 = g13;
+      }
+      g8 = g11;
     }
     first_time = false;
   } else {
-    if (gy_1) {
-      g8 = native::add (gx_1, g5, g6);
-      g7 = g8;
+    g7 = gy_1 > g4;
+    if (g7) {
+      g9 = native::add (gx_1, g5, g3);
+      g8 = g9;
     } else {
-      g10 = sum (gx_1, g11, g4, g3);
-      g7 = g10;
+      g10 = gy_1 < g4;
+      if (g10) {
+        g12 = native::mul (gx_1, g5);
+        g11 = g12;
+      } else {
+        g13 = sub (gx_1, g6, g3);
+        g11 = g13;
+      }
+      g8 = g11;
     }
-  }*/
-  return g7;
+  }
+  return g8;
 }

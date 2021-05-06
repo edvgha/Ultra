@@ -106,8 +106,14 @@ class Ultra
         std::string constantInitData(const at::Tensor& tensor);
         std::string atNative(torch::jit::Node* node, size_t level);
         std::string atNativeOut(torch::jit::Node* node, size_t level);
+        // Some corner case conditions for OP's overloading
         bool extraConditionsOn(torch::jit::Node* node);
+        // Handles None = prim::Constant() case
+        // Possible outputs are : undefined tensor or c10::nullopt
         void handleNonePrimConstant(torch::jit::Node* node, size_t arg_index);
+        // True if all arugments are integral types otherwise False
+        bool allArgsScalar(torch::jit::Node* node);
+
         
         
         void syntheticLib();

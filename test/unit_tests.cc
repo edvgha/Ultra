@@ -20,15 +20,20 @@ void test(const std::string& name, const std::string& name_out)
     ultra::Ultra u(module);
     ultra::fs::path p;
     std::optional<std::string> r = u.buildLibrary(p);
+    // std::cerr << r.value() << std::endl;
     TORCH_CHECK(r.has_value());
+    // auto rr = modifyForTest(std::move(r.value()));
     TORCH_CHECK(modifyForTest(std::move(r.value())) == name_out)
 }
 
 void unit_tests()
 {    
     test(ir_if, ir_if_out);
-    // test(ir_if_1, ir_if_1_out);
-    // test(ir_if_2);
+    test(ir_if_1, ir_if_1_out);
+    // test(ir_if_2, ir_if_2_out);
+    // test(ir_if_3, ir_if_3_out);
+    // test(ir_if_4, ir_if_4_out);
+    // test(ir_if_5, ir_if_5_out);
     // test(ir_for);
     // test(ir_for_for);
     // test(ir_for_for_if);

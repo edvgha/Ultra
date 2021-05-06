@@ -5,12 +5,11 @@
 int main()
 {
    Tensor x = ones({2, 2});
-   bool b = true;
-   bool c = false;
+   int b = 0;
 
    {
       Tensor synthetic_out;
       std::cout << synthetic_forward(x, b) << std::endl;
-      std::cout << synthetic_forward(x, c) << std::endl;
+      // std::cout << synthetic_forward(x, c) << std::endl;
    }
 }
