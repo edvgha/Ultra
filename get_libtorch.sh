@@ -12,14 +12,3 @@ then
     tar xvzf libtorch-macos-1.7.1.zip
     cd -
 fi
-
-## First time build case
-if [ ! -d "build" ] 
-then
-    echo "Create build directory."
-    mkdir build
-fi
-
-## Configure and build
-## Change dir; configure; build; move back
-cd build; cmake ..; make -j; cd -
