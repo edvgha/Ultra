@@ -14,7 +14,11 @@ From project root do :
 5. **make test (optional)**
 
 ## Demo 
-TODO
+Currently there are two demos **DeepAndWide** and **Resnet18**
+1. To run **DeepAndWide** demo from build directory run DeepAndWide/synthetic_run_daw executable.
+   The demo will check functional correctness, run both **Generated** and **PyTorch** forwards 5000 time measure runtime and display.
+2. To run **Resnet18** demo from build directory run Resnet18/synthetic_run_res18 executable.
+   The demo will check functional correctness, run both **Generated** and **PyTorch** forwards 5 time measure runtime and display.
 
 ## Install 
 TODO
