@@ -12,7 +12,11 @@ namespace fs = std::filesystem;
 /**
  * @class Ultra
  * 
- * The class will generate CPP code from given PyTorch scripted model
+ * The class will generate CPP code from given PyTorch scripted model.
+ * Main goal is generate C++ code from PyTorch IR.
+ * Useful links:
+ * https://github.com/pytorch/pytorch/wiki/PyTorch-IR
+ * https://github.com/pytorch/pytorch/blob/master/torch/csrc/jit/OVERVIEW.md
  */
 class Ultra 
 {
