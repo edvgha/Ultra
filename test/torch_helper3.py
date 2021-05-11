@@ -28,11 +28,15 @@ class FCs(torch.nn.Module):
         return self.fc(input)
 
 model = FCs()
+input = torch.randint(low = 0, high = 255, size = (32, 128)).type(torch.float)
+output = model.forward(input)
+print(output)
+print(output.shape)
 device = torch.device('cpu')
 model.to(device)
 sc = torch.jit.script(model.eval())
 fr = torch.jit.freeze(sc)
 
-print (fr.graph)
+# print (fr.graph)
 
 fr.save("LLD6.pt")

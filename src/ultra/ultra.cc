@@ -30,7 +30,9 @@ std::unordered_map<std::string, std::string> Ultra::s_natives_ =
     {"matmul", "matmul"},
     {"max_pool2d", "max_pool2d"},
     {"batch_norm", "batch_norm"},
-    {"adaptive_avg_pool2d", "adaptive_avg_pool2d_cpu"}
+    {"adaptive_avg_pool2d", "adaptive_avg_pool2d_cpu"},
+    {"leaky_relu", "leaky_relu"},
+    {"dropout", "dropout"}
 };
 
 std::unordered_map<std::string, std::string> Ultra::s_native_outs_ = 
@@ -43,7 +45,8 @@ std::unordered_map<std::string, std::string> Ultra::s_native_outs_ =
     {"addmm", "addmm_cpu_out"},
     {"sigmoid", "sigmoid_out"},
     {"matmul", "matmul_out"},
-    {"adaptive_avg_pool2d", "adaptive_avg_pool2d_out_cpu"}
+    {"adaptive_avg_pool2d", "adaptive_avg_pool2d_out_cpu"},
+    {"leaky_relu", "leaky_relu_out"}
 };
 
 

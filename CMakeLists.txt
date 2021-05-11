@@ -27,3 +27,4 @@ add_subdirectory(testM)
 
 add_subdirectory(DeepAndWide)
 add_subdirectory(Resnet18)
+add_subdirectory(LLD6)
