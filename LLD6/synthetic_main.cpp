@@ -16,6 +16,31 @@ int main()
    long long num_features = 128;
 
    Tensor input = rand({batch_size, num_features});
+   // Two times to execute 'else' branch too
+   {
+      // Run Generated 'forward' function
+      Tensor synthetic_out = synthetic_forward(input);
+      auto actual_ptr = synthetic_out.data_ptr<float>();
+      // Run PyTorch JIT 
+      IValue pytorch_jit_out = pytorch_jit_forward({input});
+      auto expected = pytorch_jit_out.toTensor();
+      auto expected_ptr = expected.data_ptr<float>();
+
+      std::stringstream msg;
+      msg << "Number of elements of expected and actual outputs don't match\n";
+      TORCH_CHECK(expected.numel() == synthetic_out.numel(),  msg.str());
+      for (size_t i = 0; i < expected.numel(); ++i) 
+      {
+         if (std::abs(expected_ptr[i] - actual_ptr[i]) >= 0.0001) 
+         {
+            std::stringstream msg;
+            msg << "Correctness check failed: " << i 
+                << " expected: " << expected_ptr[i] 
+                << " actual: " << actual_ptr[i] << '\n';
+            TORCH_CHECK(false, msg.str());
+         }
+      }
+   }
    {
       // Run Generated 'forward' function
       Tensor synthetic_out = synthetic_forward(input);

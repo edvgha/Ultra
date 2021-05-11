@@ -19,48 +19,60 @@ int main()
    Tensor gad_emb_packed_1 = rand({batch_size, 1, embedding_size});
    Tensor guser_emb_1 = rand({batch_size, 1, embedding_size});
    Tensor gwide_1 = rand({batch_size, num_features});
-
+   // Two times to execute 'else' branch too
    {
+      // Run Generated 'forward' function
       Tensor synthetic_out;
       std::tie(synthetic_out) = synthetic_forward(gad_emb_packed_1, guser_emb_1, gwide_1);
-   
+      auto actual_ptr = synthetic_out.data_ptr<float>();
+      // Run PyTorch JIT 
       IValue pytorch_jit_out = pytorch_jit_forward({gad_emb_packed_1, guser_emb_1, gwide_1});
-
       auto expected = pytorch_jit_out.toTuple()->elements()[0].toTensor();
       auto expected_ptr = expected.data_ptr<float>();
-      auto actual_ptr = synthetic_out.data_ptr<float>();
+      
 
-      TORCH_CHECK(expected.numel() == synthetic_out.numel(),  "BIZIMDIR");
-
+      std::stringstream msg;
+      msg << "Number of elements of expected and actual outputs don't match\n";
+      TORCH_CHECK(expected.numel() == synthetic_out.numel(),  msg.str());
       for (size_t i = 0; i < expected.numel(); ++i) 
       {
          if (std::abs(expected_ptr[i] - actual_ptr[i]) >= 0.0001) 
          {
-            std::cout << "BIZIMDIR " << i << " expected: " << expected_ptr[i] << " actual: " << actual_ptr[i] << std::endl;
+            std::stringstream msg;
+            msg << "Correctness check failed: " << i 
+                << " expected: " << expected_ptr[i] 
+                << " actual: " << actual_ptr[i] << '\n';
+            TORCH_CHECK(false, msg.str());
          }
       }
    }
    {
+      // Run Generated 'forward' function
       Tensor synthetic_out;
       std::tie(synthetic_out) = synthetic_forward(gad_emb_packed_1, guser_emb_1, gwide_1);
-   
+      auto actual_ptr = synthetic_out.data_ptr<float>();
+      // Run PyTorch JIT 
       IValue pytorch_jit_out = pytorch_jit_forward({gad_emb_packed_1, guser_emb_1, gwide_1});
-
       auto expected = pytorch_jit_out.toTuple()->elements()[0].toTensor();
       auto expected_ptr = expected.data_ptr<float>();
-      auto actual_ptr = synthetic_out.data_ptr<float>();
+      
 
-      TORCH_CHECK(expected.numel() == synthetic_out.numel(),  "BIZIMDIR");
-
+      std::stringstream msg;
+      msg << "Number of elements of expected and actual outputs don't match\n";
+      TORCH_CHECK(expected.numel() == synthetic_out.numel(),  msg.str());
       for (size_t i = 0; i < expected.numel(); ++i) 
       {
          if (std::abs(expected_ptr[i] - actual_ptr[i]) >= 0.0001) 
          {
-            std::cout << "BIZIMDIR " << i << " expected: " << expected_ptr[i] << " actual: " << actual_ptr[i] << std::endl;
+            std::stringstream msg;
+            msg << "Correctness check failed: " << i 
+                << " expected: " << expected_ptr[i] 
+                << " actual: " << actual_ptr[i] << '\n';
+            TORCH_CHECK(false, msg.str());
          }
       }
    }
-
+   // Measure runtime Generated vs PyTorch JIT
    auto syn_start = std::chrono::high_resolution_clock::now();
    for (size_t i = 0; i < ITERS; ++i)
    {
