@@ -793,8 +793,6 @@ std::string Ultra::ivalue(const Value* output, const IValue& v, size_t level)
             }
         }
         oss << "};\n";
-        // oss << "const c10::IntArrayRef " << normalizeName(output -> debugName()) 
-        //     << "(" << normalizeName(output -> debugName()) << "_arr" << ");\n";
         return oss.str();
     } else  {
         AT_ERROR("Tag not supported yet: ", v.tagKind());

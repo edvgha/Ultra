@@ -116,28 +116,24 @@ class Ultra
         void handleNonePrimConstant(torch::jit::Node* node, size_t arg_index);
         // True if all arugments are integral types otherwise False
         bool allArgsScalar(torch::jit::Node* node);
-
+        // Handle prim::Constant
+        // Type and constant values will be extracted and maped into c++ equivalent
         std::string primConstantAttributes(const torch::jit::Node* node, size_t level);
+        // From prim::Constant Node attribute extracts type and constant value(s)
+        // node - prim::Constant Node
+        // name - attribute name
         std::string primConstantAttributesValue(const torch::jit::Node* node, const torch::jit::Symbol& name, size_t level);
-        std::string ivalue(const torch::jit::Value* output, const c10::IValue& v, size_t level);
-        std::string type(const at::TypePtr& tPtr);
+        // Handles prim::Constant attribte when value type is Tensor
         std::string primConstantTensor(const at::Tensor& t, const torch::jit::Node* node, size_t level);
+        // Handles the case when attribute is a IValue
+        std::string ivalue(const torch::jit::Value* output, const c10::IValue& v, size_t level);
+        // Maps TypePtr into c++ equivalent, currently only used for handling return type
+        std::string type(const at::TypePtr& tPtr);
+        // Returns tuple of c++ type and corresponding Torch ScalarType's string representation
         std::tuple<std::string, std::string> cppTypeFrom(const at::ScalarType& st);
+        // Generates sequence of constant value(s) for initializing constants
         std::string constantInitData(const at::Tensor& tensor);        
         
-        void syntheticLib();
-        void writeCMakeListsTxt();
-        std::string declaration();
-        std::string returns();
-        void setupWorkspace() const;
-        c10::ArrayRef<torch::jit::Value*> inputs() const;
-        void processAttributes(const torch::jit::Node* node, bool ignore_subgraph = false) const;
-        void processAttributeValue(const torch::jit::Node* node, const c10::Symbol& name) const;
-        std::string generateCPPForwardCode() const;
-        void processReturns() const;
-        void processNode(torch::jit::Node* node, std::vector<const torch::jit::Node*>* groups) const;
-        void constValueListWithTypes(const c10::ArrayRef<torch::jit::Value*> inputs) const;
-
     private:
         torch::jit::script::Module module_; // The model
         std::shared_ptr<torch::jit::Graph> graph_; // graph extracted from model
