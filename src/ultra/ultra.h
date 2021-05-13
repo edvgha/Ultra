@@ -139,6 +139,11 @@ class Ultra
         void ne();
         // Customize aten::dim
         void dimToSizes();
+        // Experimental
+        std::string nodeSchema(torch::jit::Node*, size_t level);
+        std::string nodeArgument(const c10::Argument& argument);
+        std::string printQuotedString(const std::string& str);
+        bool isPrint(char s);
         
     private:
         torch::jit::script::Module module_; // The model

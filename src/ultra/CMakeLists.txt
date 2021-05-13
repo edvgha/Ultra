@@ -2,6 +2,7 @@ set(SOURCE_FILES
     ultra.h
     ultra.cc
     passes.cc
+    schema.cc
 )
 
 add_library(ultra SHARED STATIC ${SOURCE_FILES})
