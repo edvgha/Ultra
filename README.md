@@ -30,6 +30,19 @@ Currently there are two demos **DeepAndWide** and **LLD6**
    The demo will check functional correctness, run both **Generated** and **PyTorch** forwards 10 time measure runtime and display.
 4. To run **ResNet50** demo from build directory run Resnet50/synthetic_run_res50 executable.
    The demo will check functional correctness, run both **Generated** and **PyTorch** forwards 10 time measure runtime and display.
+   
+<!-- tocstop -->
+
+| Model | SpeedUp compared to PyTorch | Data |
+| :---: | :---: | :---: |
+| DeepAndWide | 40x | 64x1x32x50 |
+| LLD6 | 20x | 32x128 |
+| ResNet18 | 6x | 1x3x64x64 |
+| ResNet50 | 6x | 1x3x64x64 |
+
+Machine : 
+ - Processor 3.2 GHz 6-Core Intel Core i7
+ - Memory 32 GB 2667 MHz DDR4
 
 ## Install 
 TODO
