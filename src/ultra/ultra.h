@@ -15,7 +15,7 @@ namespace fs = std::filesystem;
  * The PyTorch JIT IR graph compiler.
  *
  * The class will compile dynamically specified data flow PyTorch JIT IR graph into 
- * C++ which all to reduce DL framework overhead.
+ * C++ which allow to reduce DL framework overhead.
  * Useful links:
  * https://github.com/pytorch/pytorch/wiki/PyTorch-IR
  * https://github.com/pytorch/pytorch/blob/master/torch/csrc/jit/OVERVIEW.md
