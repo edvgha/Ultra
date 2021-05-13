@@ -24,8 +24,12 @@ From project root do :
 Currently there are two demos **DeepAndWide** and **LLD6**
 1. To run **DeepAndWide** demo from build directory run DeepAndWide/synthetic_run_daw executable.
    The demo will check functional correctness, run both **Generated** and **PyTorch** forwards 5000 time measure runtime and display.
-2. To run **LLD6** demo from build directory run Resnet18/synthetic_run_lld6 executable.
+2. To run **LLD6** demo from build directory run LLD6/synthetic_run_lld6 executable.
    The demo will check functional correctness, run both **Generated** and **PyTorch** forwards 5000 time measure runtime and display.
+3. To run **ResNet18** demo from build directory run Resnet18/synthetic_run_res18 executable.
+   The demo will check functional correctness, run both **Generated** and **PyTorch** forwards 10 time measure runtime and display.
+4. To run **ResNet50** demo from build directory run Resnet50/synthetic_run_res50 executable.
+   The demo will check functional correctness, run both **Generated** and **PyTorch** forwards 10 time measure runtime and display.
 
 ## Install 
 TODO
