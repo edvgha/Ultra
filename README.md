@@ -1,10 +1,11 @@
 # Ultra
 
 The main goal of Ultra is to implement the zero-overhead principle
-by compiling PyTorch JIT IR graph representation into C++. 
+by compiling dynamically specified data flow PyTorch JIT IR graph 
+into C++ which allow to reduce DL framework overhead. 
 
        In general, C++ implementations obey the zero-overhead
-       principle: What you don’t use, you don’t pay for.  And
+       principle: What you don’t use, you don’t pay for. And
        further: What you do use, you couldn’t hand code any
        better.
 
