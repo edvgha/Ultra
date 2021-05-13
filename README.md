@@ -1,6 +1,12 @@
 # Ultra
 
-The main goal of Ultra is speed up prediction for PyTorch based models.
+The main goal of Ultra is to implement the zero-overhead principle
+by compiling PyTorch JIT IR graph representation into C++. 
+
+       In general, C++ implementations obey the zero-overhead
+       principle: What you don’t use, you don’t pay for.  And
+       further: What you do use, you couldn’t hand code any
+       better.
 
 ![alt text](https://github.com/edvgha/Ultra/blob/main/docs/flow.png?raw=true)
 
