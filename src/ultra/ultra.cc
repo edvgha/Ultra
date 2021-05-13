@@ -80,6 +80,8 @@ Ultra::Ultra(script::Module module)
         foldSizeLenGT();
         foldDimNE();
         foldDimEQ();
+        dimToSizes();
+        ne();
         // Dump
         graph_ -> dump();
     }
@@ -371,7 +373,14 @@ std::string Ultra::primNode(Node* node, size_t level)
     else if (node -> hasAttribute(attr::Subgraph))
     {
         TORCH_CHECK(false, "attr::Subgraph is not supported yet");
-    } 
+    }
+    else if (std::string(node -> kind() . toQualString()) == "aten::format") 
+    {
+        // At this moment ignore aten::format so far it was used only to 
+        // generate message for prim::RaiseException and currently we
+        // compile prim::RaiseException into throw
+        return "";
+    }
     else if (std::string(node -> kind() . toQualString()) == "Ultra::size_len_gt")
     {
         // Converts %a : bool = Ultra::size_len_gt(%b, %c) into bool a = b.ndimension() > c;
@@ -406,6 +415,28 @@ std::string Ultra::primNode(Node* node, size_t level)
         oss << "bool " << normalizeName(out -> debugName()) << " = "
             << normalizeName(node -> inputs()[0] -> debugName()) << ".ndimension() == " 
             << normalizeName(node -> inputs()[1] -> debugName()) << ";\n";
+        return oss.str();
+    }
+    else if (std::string(node -> kind() . toQualString()) == "Ultra::dim")
+    {
+        // %x : int = aten::dim(%t) compile to auto x = %t.sizes().size();
+        oss << std::string(2 * level, ' ');
+        auto out = node -> outputs()[0];
+
+        oss << "auto " << normalizeName(out -> debugName()) << " = "
+            << normalizeName(node -> inputs()[0] -> debugName()) 
+            << ".sizes().size();\n";
+        return oss.str();
+    } 
+    else if (std::string(node -> kind() . toQualString()) == "Ultra::ne")
+    {
+        // %x : bool = aten::ne(%a, %b) compile to bool x = (%a != %b);
+        oss << std::string(2 * level, ' ');
+        auto out = node -> outputs()[0];
+
+        oss << "bool " << normalizeName(out -> debugName()) << " = ("
+            << normalizeName(node -> inputs()[0] -> debugName()) 
+            << " != " << normalizeName(node -> inputs()[1] -> debugName())  << ");\n";
         return oss.str();
     }
 
@@ -502,7 +533,7 @@ std::string Ultra::atNative(Node* node, size_t level)
     } 
     else 
     {
-        oss << node -> kind() . toUnqualString() << " (";
+        oss << "aten::" << node -> kind() . toUnqualString() << " (";
     }
     
     // Process inputs.

@@ -2,9 +2,11 @@
 .DS_Store
 DeepAndWide/forward.cpp
 DeepAndWide/forward.h
-Resnet18/forward.cpp
-Resnet18/forward.h
 LLD6/forward.cpp
 LLD6/forward.h
+Resnet18/forward.cpp
+Resnet18/forward.h
+Resnet50/forward.cpp
+Resnet50/forward.h
 build/
 ext/

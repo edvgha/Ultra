@@ -6,17 +6,48 @@ namespace ultra {
 
 using namespace torch::jit;
 
+// Register cusom Operators
+TORCH_LIBRARY(Ultra, m) {
+  m.def("size_len_gt(Tensor self, int i) -> bool");
+  m.def("dim_ne(Tensor self, int i) -> bool");
+  m.def("dim_eq(Tensor self, int i) -> bool");
+  m.def("dim(Tensor self) -> int");
+  m.def("ne(int a, int b) -> bool");
+}
+
+void Ultra::ne()
+{
+    std::string pattern = R"IR(
+        graph(%x, %y):
+            %c = aten::ne(%x, %y)
+            return (%c))IR";
+    std::string target = R"IR(
+        graph(%x, %y):
+            %c = Ultra::ne(%x, %y)
+            return (%c))IR";
+    SubgraphRewriter folder;
+    folder.RegisterRewritePattern(pattern, target);
+    folder.runOnGraph(graph_);
+}
+
+void Ultra::dimToSizes()
+{
+    std::string pattern = R"IR(
+        graph(%x):
+            %c : int = aten::dim(%x)
+            return (%c))IR";
+    std::string target = R"IR(
+        graph(%x):
+            %c : int = Ultra::dim(%x)
+            return (%c))IR";
+    SubgraphRewriter folder;
+    folder.RegisterRewritePattern(pattern, target);
+    folder.runOnGraph(graph_);
+}
+
 void Ultra::foldSizeLenGT()
 {
-    // The functionality is not important since we are not going to execute graph
-    auto registrar = c10::RegisterOperators().op("Ultra::size_len_gt", 
-                                                 c10::RegisterOperators::options().kernel(at::DispatchKey::CPU, 
-                                                 [] (at::Tensor&, int64_t& i) -> bool {return true;}));
-
-    auto op = c10::Dispatcher::singleton().findSchema({"Ultra::size_len_gt", ""});
-    TORCH_CHECK(op.has_value(), "Failed to register Ultra::size_len_gt");
-
-    std::string patter = R"IR(
+    std::string pattern = R"IR(
         graph(%x, %y):
             %b : int[] = aten::size(%x)
             %c : int = aten::len(%b)
@@ -27,21 +58,13 @@ void Ultra::foldSizeLenGT()
             %d : bool = Ultra::size_len_gt(%x, %y)
             return (%d))IR";
     SubgraphRewriter folder;
-    folder.RegisterRewritePattern(patter, target);
+    folder.RegisterRewritePattern(pattern, target);
     folder.runOnGraph(graph_);
 }
 
 void Ultra::foldDimNE()
 {
-    // The functionality is not important since we are not going to execute graph
-    auto registrar = c10::RegisterOperators().op("Ultra::dim_ne", 
-                                                 c10::RegisterOperators::options().kernel(at::DispatchKey::CPU, 
-                                                 [] (at::Tensor&, int64_t& i) -> bool {return true;}));
-
-    auto op = c10::Dispatcher::singleton().findSchema({"Ultra::dim_ne", ""});
-    TORCH_CHECK(op.has_value(), "Failed to register Ultra::dim_ne");
-
-    std::string patter = R"IR(
+    std::string pattern = R"IR(
         graph(%x, %y):
             %a : int = aten::dim(%x)
             %d : bool = aten::ne(%a, %y)
@@ -51,21 +74,13 @@ void Ultra::foldDimNE()
             %d : bool = Ultra::dim_ne(%x, %y)
             return (%d))IR";
     SubgraphRewriter folder;
-    folder.RegisterRewritePattern(patter, target);
+    folder.RegisterRewritePattern(pattern, target);
     folder.runOnGraph(graph_);
 }
 
 void Ultra::foldDimEQ()
 {
-    // The functionality is not important since we are not going to execute graph
-    auto registrar = c10::RegisterOperators().op("Ultra::dim_eq", 
-                                                 c10::RegisterOperators::options().kernel(at::DispatchKey::CPU, 
-                                                 [] (at::Tensor&, int64_t& i) -> bool {return true;}));
-
-    auto op = c10::Dispatcher::singleton().findSchema({"Ultra::dim_eq", ""});
-    TORCH_CHECK(op.has_value(), "Failed to register Ultra::dim_eq");
-
-    std::string patter = R"IR(
+    std::string pattern = R"IR(
         graph(%x, %y):
             %a : int = aten::dim(%x)
             %d : bool = aten::eq(%a, %y)
@@ -75,7 +90,7 @@ void Ultra::foldDimEQ()
             %d : bool = Ultra::dim_eq(%x, %y)
             return (%d))IR";
     SubgraphRewriter folder;
-    folder.RegisterRewritePattern(patter, target);
+    folder.RegisterRewritePattern(pattern, target);
     folder.runOnGraph(graph_);
 }
 

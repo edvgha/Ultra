@@ -134,7 +134,11 @@ class Ultra
         // Returns tuple of c++ type and corresponding Torch ScalarType's string representation
         std::tuple<std::string, std::string> cppTypeFrom(const at::ScalarType& st);
         // Generates sequence of constant value(s) for initializing constants
-        std::string constantInitData(const at::Tensor& tensor);        
+        std::string constantInitData(const at::Tensor& tensor);
+        // Customize aten::ne
+        void ne();
+        // Customize aten::dim
+        void dimToSizes();
         
     private:
         torch::jit::script::Module module_; // The model

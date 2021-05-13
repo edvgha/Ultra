@@ -2,7 +2,7 @@
 #include <torch/csrc/jit/serialization/import.h>
 #include <chrono>
 
-#define ITERS 5
+#define ITERS 10
 
 c10::IValue pytorch_jit_forward(const std::vector<c10::IValue>& inputs)
 {
@@ -12,10 +12,9 @@ c10::IValue pytorch_jit_forward(const std::vector<c10::IValue>& inputs)
 }
 
 int main()
-{ 
-
-   long long batch_size = 64;
-   Tensor input = rand({batch_size, 3, 244, 244});
+{
+   long long batch_size = 1;
+   Tensor input = rand({batch_size, 3, 64, 64});
    // Two times to execute 'else' branch too
    {
       // Run Generated 'forward' function
