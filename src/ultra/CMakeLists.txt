@@ -2,6 +2,7 @@ set(SOURCE_FILES
     ultra.h
     ultra.cc
     passes.cc
+    native_library.cc
     schema.cc
 )
 

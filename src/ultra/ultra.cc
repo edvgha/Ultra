@@ -9,6 +9,8 @@
 #include <cstdlib>
 #include <iostream>
 
+#include "native_library.h"
+
 namespace ultra 
 {
 
@@ -17,6 +19,7 @@ using namespace torch::jit;
 std::unordered_map<std::string, std::string> Ultra::s_natives_ = 
 {
     {"add", "add"},
+    {"sub", "sub"},
     {"mul", "mul"},
     {"clamp", "clamp"},
     {"transpose", "transpose"},
@@ -82,6 +85,8 @@ Ultra::Ultra(script::Module module)
         foldDimEQ();
         dimToSizes();
         ne();
+        gt();
+        lt();
         // Dump
         graph_ -> dump();
     }
@@ -428,15 +433,18 @@ std::string Ultra::primNode(Node* node, size_t level)
             << ".sizes().size();\n";
         return oss.str();
     } 
-    else if (std::string(node -> kind() . toQualString()) == "Ultra::ne")
+    else if (std::string(node -> kind() . toQualString()) == "Ultra::ne" or 
+             std::string(node -> kind() . toQualString()) == "Ultra::gt" or 
+             std::string(node -> kind() . toQualString()) == "Ultra::lt")
     {
         // %x : bool = aten::ne(%a, %b) compile to bool x = (%a != %b);
         oss << std::string(2 * level, ' ');
         auto out = node -> outputs()[0];
 
         oss << "bool " << normalizeName(out -> debugName()) << " = ("
-            << normalizeName(node -> inputs()[0] -> debugName()) 
-            << " != " << normalizeName(node -> inputs()[1] -> debugName())  << ");\n";
+            << normalizeName(node -> inputs()[0] -> debugName()); 
+        oss << mapUltraOp(node -> kind() . toQualString());
+        oss << normalizeName(node -> inputs()[1] -> debugName())  << ");\n";
         return oss.str();
     }
 
@@ -527,6 +535,10 @@ std::string Ultra::atNative(Node* node, size_t level)
     // Gets OP's C++ equivalent API
     oss << std::string(2 * level, ' ');
     oss << normalizeName(primOut -> debugName()) << " = ";
+
+    const c10::FunctionSchema* schema = node -> maybeSchema();
+    TORCH_CHECK(schema != nullptr);
+    TORCH_CHECK(containsInNativeLibrary(*schema), "There is no native for ", *schema);
     if (s_natives_.count(std::string(node -> kind() . toUnqualString())))
     {
         oss << "native::" << s_natives_[std::string(node -> kind() . toUnqualString())] << " (";
@@ -595,7 +607,7 @@ std::string Ultra::atNativeOut(Node* node, size_t level)
     {
         oss << std::string(2 * level, ' ');
         oss << normalizeName(primOut -> debugName()) << " = ";
-        oss << node -> kind() . toUnqualString() << " (";
+        oss << "aten::" << node -> kind() . toUnqualString() << " (";
     }
     
     // Process inputs.

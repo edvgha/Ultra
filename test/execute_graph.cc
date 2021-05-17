@@ -38,9 +38,18 @@ void test_functional(const std::string& name, const std::vector<c10::IValue>& in
 
 int main(int argc, char** argv)
 {
-    test_functional(ir_if, {at::ones({2, 2}), true});
-    test_functional(ir_if, {at::ones({2, 2}), false});
-    test_functional(ir_if_1, {at::ones({2, 2}), true});
-    test_functional(ir_if_1, {at::ones({2, 2}), false});
+    // test_functional(ir_if, {at::ones({2, 2}), true});
+    // test_functional(ir_if, {at::ones({2, 2}), false});
+    // test_functional(ir_if_1, {at::ones({2, 2}), true});
+    // test_functional(ir_if_1, {at::ones({2, 2}), false});
+    // test_functional(ir_if_2, {at::ones({2, 2}), 0});
+    // test_functional(ir_if_2, {at::ones({2, 2}), 2});
+    // test_functional(ir_if_2, {at::ones({2, 2}), -1});
+    test_functional(ir_if_3, {at::ones({2, 2}), true, 0});
+    test_functional(ir_if_3, {at::ones({2, 2}), false, 0});
+    test_functional(ir_if_3, {at::ones({2, 2}), true, 1});
+    test_functional(ir_if_3, {at::ones({2, 2}), false, 1});
+    test_functional(ir_if_3, {at::ones({2, 2}), true, -1});
+    test_functional(ir_if_3, {at::ones({2, 2}), false, -1});
     return 0;
 }

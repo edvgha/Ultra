@@ -26,10 +26,13 @@ const auto ir_if_2 = R"JIT(
 )JIT";
 
 const auto ir_if_3 = R"JIT(
-  def forward(self, x : Tensor, y : bool):
-      if y > 0 :
-        return 2 + x
-      elif y < 0:
+  def forward(self, x : Tensor, y : bool, z : int):
+      if z > 0 :
+        if y:
+          return 2 + x
+        else:
+          return 1 + x
+      elif z < 0:
         return 2 * x
       else:
         return x - 4

@@ -3,67 +3,83 @@
 
 bool first_time = true;
 
-Tensor g12;
+Tensor g16;
 
-bool g10;
+Tensor g15;
+
+const int g6 = 1;
 
 Tensor g9;
 
-Tensor g8;
+Tensor g14;
 
-Tensor g11;
-
-bool g7;
-
-const int g3 = 1;
+bool g13;
 
 const int g4 = 0;
 
+Tensor g10;
+
+Tensor g12;
+
 const int g5 = 2;
 
-Tensor g13;
+Tensor g11;
 
-const int g6 = 4;
+bool g8;
+
+const int g7 = 4;
 
 
 
-Tensor synthetic_forward (Tensor& gx_1, int& gy_1) 
+Tensor synthetic_forward (Tensor& gx_1, bool& gy_1, int& gz_1) 
 {
 	NoGradGuard no_grad;
 
   if (first_time) {
-    g7 = gy_1 > g4;
-    if (g7) {
-      g9 = native::add (gx_1, g5, g3);
-      g8 = g9;
-    } else {
-      g10 = gy_1 < g4;
-      if (g10) {
-        g12 = native::mul (gx_1, g5);
-        g11 = g12;
+    g8 = gz_1 >  g4;
+    if (g8) {
+      if (gy_1) {
+        g11 = native::add (gx_1, g5, g6);
+        g10 = g11;
       } else {
-        g13 = sub (gx_1, g6, g3);
-        g11 = g13;
+        g12 = native::add (gx_1, g6, g6);
+        g10 = g12;
       }
-      g8 = g11;
+      g9 = g10;
+    } else {
+      g13 = (gz_1 < g4);
+      if (g13) {
+        g15 = native::mul (gx_1, g5);
+        g14 = g15;
+      } else {
+        g16 = native::sub (gx_1, g7, g6);
+        g14 = g16;
+      }
+      g9 = g14;
     }
     first_time = false;
   } else {
-    g7 = gy_1 > g4;
-    if (g7) {
-      g9 = native::add (gx_1, g5, g3);
-      g8 = g9;
-    } else {
-      g10 = gy_1 < g4;
-      if (g10) {
-        g12 = native::mul (gx_1, g5);
-        g11 = g12;
+    g8 = (gz_1 > g4);
+    if (g8) {
+      if (gy_1) {
+        //native::add_out (g11, gx_1, g5, g6);
+        g10 = g11;
       } else {
-        g13 = sub (gx_1, g6, g3);
-        g11 = g13;
+        //native::add_out (g12, gx_1, g6, g6);
+        g10 = g12;
       }
-      g8 = g11;
+      g9 = g10;
+    } else {
+      g13 = (gz_1 < g4);
+      if (g13) {
+        g15 = native::mul (gx_1, g5);
+        g14 = g15;
+      } else {
+        g16 = sub (gx_1, g7, g6);
+        g14 = g16;
+      }
+      g9 = g14;
     }
   }
-  return g8;
+  return g9;
 }

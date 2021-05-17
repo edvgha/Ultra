@@ -20,7 +20,7 @@ namespace fs = std::filesystem;
  * https://github.com/pytorch/pytorch/wiki/PyTorch-IR
  * https://github.com/pytorch/pytorch/blob/master/torch/csrc/jit/OVERVIEW.md
  */
-class Ultra 
+class Ultra final
 {
     public: // Standard methods
         /**
@@ -137,8 +137,14 @@ class Ultra
         std::string constantInitData(const at::Tensor& tensor);
         // Customize aten::ne
         void ne();
+        // Customize aten::gt
+        void gt();
+        // Customize aten::lt
+        void lt();
         // Customize aten::dim
         void dimToSizes();
+        // Map preregistered Ultra OP into C++ equivalent
+        std::string mapUltraOp(const char* op);        
         // Experimental
         std::string nodeSchema(torch::jit::Node*, size_t level);
         std::string nodeArgument(const c10::Argument& argument);

@@ -13,6 +13,8 @@ TORCH_LIBRARY(Ultra, m) {
   m.def("dim_eq(Tensor self, int i) -> bool");
   m.def("dim(Tensor self) -> int");
   m.def("ne(int a, int b) -> bool");
+  m.def("gt(int a, int b) -> bool");
+  m.def("lt(int a, int b) -> bool");
 }
 
 void Ultra::ne()
@@ -24,6 +26,36 @@ void Ultra::ne()
     std::string target = R"IR(
         graph(%x, %y):
             %c = Ultra::ne(%x, %y)
+            return (%c))IR";
+    SubgraphRewriter folder;
+    folder.RegisterRewritePattern(pattern, target);
+    folder.runOnGraph(graph_);
+}
+
+void Ultra::gt()
+{
+    std::string pattern = R"IR(
+        graph(%x, %y):
+            %c = aten::gt(%x, %y)
+            return (%c))IR";
+    std::string target = R"IR(
+        graph(%x, %y):
+            %c = Ultra::gt(%x, %y)
+            return (%c))IR";
+    SubgraphRewriter folder;
+    folder.RegisterRewritePattern(pattern, target);
+    folder.runOnGraph(graph_);
+}
+
+void Ultra::lt()
+{
+    std::string pattern = R"IR(
+        graph(%x, %y):
+            %c = aten::lt(%x, %y)
+            return (%c))IR";
+    std::string target = R"IR(
+        graph(%x, %y):
+            %c = Ultra::lt(%x, %y)
             return (%c))IR";
     SubgraphRewriter folder;
     folder.RegisterRewritePattern(pattern, target);
@@ -92,6 +124,23 @@ void Ultra::foldDimEQ()
     SubgraphRewriter folder;
     folder.RegisterRewritePattern(pattern, target);
     folder.runOnGraph(graph_);
+}
+
+std::string Ultra::mapUltraOp(const char* op) 
+{
+    if (std::string(op) == "Ultra::ne") 
+    {
+        return " != ";
+    }
+    else if (std::string(op) == "Ultra::gt")
+    {
+        return " > ";
+    } 
+    else if (std::string(op) == "Ultra::lt")
+    {
+        return " < ";
+    }
+    return "";
 }
 
 } // namespace ultra
