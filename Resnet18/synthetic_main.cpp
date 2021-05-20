@@ -2,7 +2,7 @@
 #include <torch/csrc/jit/serialization/import.h>
 #include <chrono>
 
-#define ITERS 10
+#define ITERS 50
 
 c10::IValue pytorch_jit_forward(const std::vector<c10::IValue>& inputs)
 {

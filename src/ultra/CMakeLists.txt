@@ -1,7 +1,8 @@
 set(SOURCE_FILES
     ultra.h
     ultra.cc
-    passes.cc
+    ultra_replace_passes.cc
+    mutator_passes.cc
     native_library.cc
     schema.cc
 )

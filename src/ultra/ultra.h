@@ -146,7 +146,9 @@ class Ultra final
         // Customize aten::dim
         void dimToSizes();
         // Map preregistered Ultra OP into C++ equivalent
-        std::string mapUltraOp(const char* op);        
+        std::string mapUltraOp(const char* op);
+        // Try to replace relu with relu_
+        void try_to_use_inplace_relu();
         // Experimental
         std::string nodeSchema(torch::jit::Node*, size_t level);
         std::string nodeArgument(const c10::Argument& argument);
@@ -161,6 +163,7 @@ class Ultra final
         std::string code_; // forward.cpp file's content
         bool first_time_; // used for caching
         std::unordered_set<std::string> global_scope_; // all global declarations/definitions
+        std::unordered_set<torch::jit::Node*> inplace_nodes_; // nodes should be replaced with inplace version
         // Static members
         static int s_phiLoop_id_; // used for generate unique initial loop condition variable name
 };

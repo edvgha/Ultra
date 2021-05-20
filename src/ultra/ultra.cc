@@ -41,6 +41,8 @@ Ultra::Ultra(script::Module module)
         // Prepare for code generation
         OptimizeGraph();
         RemoveSelfFromGraphInput();
+        // trying to change relu with relu_
+        try_to_use_inplace_relu();
         // Some foldings which helps 
         // to more easly generate code
         foldSizeLenGT();
@@ -505,14 +507,24 @@ std::string Ultra::atNative(Node* node, size_t level)
     // Gets OP's C++ equivalent API
     oss << std::string(2 * level, ' ');
     // RHS
-    oss << normalizeName(primOut -> debugName()) << " = ";
+    if (inplace_nodes_.count(node) == 0)
+    {   // if we are going to use inplace version then 
+        // no need for RHS
+        oss << normalizeName(primOut -> debugName()) << " = ";
+    }
     const c10::FunctionSchema* schema = node -> maybeSchema();
     TORCH_CHECK(schema != nullptr);
     TORCH_CHECK(containsInNativeLibrary(*schema), "There is no native for ", *schema);
     std::string nativeName = getNativeVariant(*schema);
     TORCH_CHECK(not nativeName.empty(), "Operator native name is empty.")
     // LHS
-    oss << "native::" << removeNamespace(nativeName) << " (";
+    oss << "native::" << removeNamespace(nativeName);
+    if (inplace_nodes_.count(node) != 0)
+    {
+        // Use inplace version
+        oss << "_";
+    }
+    oss << " (";
     
     // Process inputs.
     // Since input is uniquely identified , 
@@ -570,11 +582,22 @@ std::string Ultra::atNativeOut(Node* node, size_t level)
     {
         oss << std::string(2 * level, ' ');
         // RHS
-        oss << normalizeName(primOut -> debugName()) << " = ";
+        if (inplace_nodes_.count(node) == 0)
+        {
+            // if we are going to use inplace version then 
+            // no need for RHS
+            oss << normalizeName(primOut -> debugName()) << " = ";
+        }
         // LHS
         std::string nativeName = getNativeVariant(*schema);
         TORCH_CHECK(not nativeName.empty(), "Operator native name is empty.");
-        oss << "native::" << removeNamespace(nativeName) << " (";
+        oss << "native::" << removeNamespace(nativeName);
+        if (inplace_nodes_.count(node) != 0)
+        {
+            // Use inplace version
+            oss << "_";
+        }
+        oss << " (";
     }
     
     // Process inputs.
