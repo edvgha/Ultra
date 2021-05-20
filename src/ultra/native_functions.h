@@ -415,7 +415,7 @@ std::vector<std::string> n_functions = {
 "cat(Tensor[] tensors, int dim=0) -> Tensor",
 "NO_NS::NO_FUNCTION",
 "cat.out(Tensor[] tensors, int dim=0, *, Tensor(a!) out) -> Tensor(a!)",
-"NO_NS::NO_FUNCTION",
+"_cat_out_cpu",
 "cat.names(Tensor[] tensors, Dimname dim) -> Tensor",
 "NO_NS::NO_FUNCTION",
 "cat.names_out(Tensor[] tensors, Dimname dim, *, Tensor(a!) out) -> Tensor(a!)",

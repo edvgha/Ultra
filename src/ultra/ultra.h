@@ -92,6 +92,8 @@ class Ultra final
         void graphTraversal();
         // Make names c++ friendly
         std::string normalizeName(const std::string& name) const;
+        // Remove namespace if exists
+        std::string removeNamespace(const std::string& name) const;
         // Process block's content
         // https://github.com/pytorch/pytorch/blob/master/torch/csrc/jit/OVERVIEW.md#block
         std::string blockTraversal(torch::jit::Block* block, size_t level);
@@ -160,8 +162,6 @@ class Ultra final
         bool first_time_; // used for caching
         std::unordered_set<std::string> global_scope_; // all global declarations/definitions
         // Static members
-        static std::unordered_map<std::string, std::string> s_natives_; // map of aten::native ops
-        static std::unordered_map<std::string, std::string> s_native_outs_; // map of aten::native ops with 'out' versions
         static int s_phiLoop_id_; // used for generate unique initial loop condition variable name
 };
 

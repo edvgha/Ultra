@@ -16,43 +16,6 @@ namespace ultra
 
 using namespace torch::jit;
 
-std::unordered_map<std::string, std::string> Ultra::s_natives_ = 
-{
-    {"add", "add"},
-    {"sub", "sub"},
-    {"mul", "mul"},
-    {"clamp", "clamp"},
-    {"transpose", "transpose"},
-    {"bmm", "bmm_cpu"},
-    {"flatten", "flatten"},
-    {"cat", "_cat_cpu"},
-    {"addmm", "addmm_cpu"},
-    {"sigmoid", "sigmoid"},
-    {"conv2d", "conv2d"},
-    {"relu", "relu"},
-    {"matmul", "matmul"},
-    {"max_pool2d", "max_pool2d"},
-    {"batch_norm", "batch_norm"},
-    {"adaptive_avg_pool2d", "adaptive_avg_pool2d_cpu"},
-    {"leaky_relu", "leaky_relu"},
-    {"dropout", "dropout"}
-};
-
-std::unordered_map<std::string, std::string> Ultra::s_native_outs_ = 
-{
-    {"add", "add_out"},
-    {"mul", "mul_out"},
-    {"clamp", "clamp_out"},
-    {"bmm", "bmm_out_cpu"},
-    {"cat", "_cat_out_cpu"},
-    {"addmm", "addmm_cpu_out"},
-    {"sigmoid", "sigmoid_out"},
-    {"matmul", "matmul_out"},
-    {"adaptive_avg_pool2d", "adaptive_avg_pool2d_out_cpu"},
-    {"leaky_relu", "leaky_relu_out"}
-};
-
-
 int Ultra::s_phiLoop_id_ = 0;
 
 Ultra::Ultra(script::Module module) 
@@ -274,6 +237,13 @@ std::string Ultra::normalizeName(const std::string& name) const
         }
     }
     return s;
+}
+
+// Remove namespace if exists
+std::string Ultra::removeNamespace(const std::string& name) const
+{
+    auto pos = name.find("::");
+    return std::string::npos == pos ? name : name.substr(pos + 2);
 }
 
 std::string Ultra::type(const at::TypePtr& tPtr)
@@ -534,19 +504,15 @@ std::string Ultra::atNative(Node* node, size_t level)
 
     // Gets OP's C++ equivalent API
     oss << std::string(2 * level, ' ');
+    // RHS
     oss << normalizeName(primOut -> debugName()) << " = ";
-
     const c10::FunctionSchema* schema = node -> maybeSchema();
     TORCH_CHECK(schema != nullptr);
     TORCH_CHECK(containsInNativeLibrary(*schema), "There is no native for ", *schema);
-    if (s_natives_.count(std::string(node -> kind() . toUnqualString())))
-    {
-        oss << "native::" << s_natives_[std::string(node -> kind() . toUnqualString())] << " (";
-    } 
-    else 
-    {
-        oss << "aten::" << node -> kind() . toUnqualString() << " (";
-    }
+    std::string nativeName = getNativeVariant(*schema);
+    TORCH_CHECK(not nativeName.empty(), "Operator native name is empty.")
+    // LHS
+    oss << "native::" << removeNamespace(nativeName) << " (";
     
     // Process inputs.
     // Since input is uniquely identified , 
@@ -584,30 +550,31 @@ std::string Ultra::atNativeOut(Node* node, size_t level)
     auto primOut = outs[0];
     auto primIns = node -> inputs();
     size_t inSize = primIns.size();
-    
-    // Prefer native out version of op
-    if (s_native_outs_.count(std::string(node -> kind() . toUnqualString())) && extraConditionsOn(node))
+
+    const c10::FunctionSchema* schema = node -> maybeSchema();
+    TORCH_CHECK(schema != nullptr);
+    TORCH_CHECK(containsInNativeLibrary(*schema), "There is no native for ", *schema);
+    std::string outVariant = getOutVariant(*schema);
+    if (not outVariant.empty())
     {
         oss << std::string(2 * level, ' ');
-        oss << "native::" << s_native_outs_[std::string(node -> kind() . toUnqualString())] << " (";
+        // no RHS when 'out' variant is available
+        oss << "native::" << removeNamespace(outVariant) << " (";
         oss << normalizeName(primOut -> debugName());
-        if (inSize > 0) {
+        if (inSize > 0) 
+        {
             oss << ", ";
         }
-    }
-    // Prefer native version
-    else if (s_natives_.count(std::string(node -> kind() . toUnqualString())))
-    {
-        oss << std::string(2 * level, ' ');
-        oss << normalizeName(primOut -> debugName()) << " = ";
-        oss << "native::" << s_natives_[std::string(node -> kind() . toUnqualString())] << " (";
-    }
-    // If we failed to get 'native out' and 'native' versions go with sandard one
+    } 
     else 
     {
         oss << std::string(2 * level, ' ');
+        // RHS
         oss << normalizeName(primOut -> debugName()) << " = ";
-        oss << "aten::" << node -> kind() . toUnqualString() << " (";
+        // LHS
+        std::string nativeName = getNativeVariant(*schema);
+        TORCH_CHECK(not nativeName.empty(), "Operator native name is empty.");
+        oss << "native::" << removeNamespace(nativeName) << " (";
     }
     
     // Process inputs.

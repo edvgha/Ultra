@@ -38,6 +38,33 @@ struct NativeSchemas final
         }
         return false;
     }
+
+    std::string getOutVariant(const c10::FunctionSchema& schema) const
+    {
+        for (auto& el: native_schemas_)
+        {
+            if (el.first.name() == schema.name() and el.first.overload_name() == "out")
+            {
+                return el.second.name == "NO_NS::NO_FUNCTION" ? schema.name() + "_out" : el.second.name;
+                return el.second.name == "NO_NS::NO_FUNCTION" ? "" : el.second.name;
+            }
+        }
+        std::cerr << " >>> NO OUT VARIANT FOR " << schema << std::endl;
+        return "";
+    }
+
+    std::string getNativeVariant(const c10::FunctionSchema& schema) const 
+    {
+        for (auto& el: native_schemas_)
+        {
+            if (el.first.name() == schema.name() and el.first.overload_name() != "out")
+            {
+                return el.second.name == "NO_NS::NO_FUNCTION" ? schema . name() : el.second.name;
+            }
+        }
+        std::cerr << " >>> NO NATIVE NAME FOR " << schema << std::endl;
+        return "";
+    }
     // TODO make c10::FunctionSchema hashable
     // {<Native function schema>, <CPU dispatcher function name/"NO_FUNCTION">}
     std::vector<std::pair<c10::FunctionSchema, c10::OperatorName>> native_schemas_;
@@ -54,6 +81,16 @@ NativeSchemas& getNative()
 bool containsInNativeLibrary(const c10::FunctionSchema& schema)
 {
     return getNative().contains(schema);
+}
+
+std::string getOutVariant(const c10::FunctionSchema& schema)
+{
+    return getNative().getOutVariant(schema);
+}
+
+std::string getNativeVariant(const c10::FunctionSchema& schema)
+{
+    return getNative().getNativeVariant(schema);
 }
 
 } // namespace ultra
