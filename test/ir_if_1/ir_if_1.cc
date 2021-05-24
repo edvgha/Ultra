@@ -98,6 +98,6 @@ void test(const std::string& name,
 
 int main(int argc, char** argv)
 {
-    test(ir_if, {at::ones({2, 2}), true}, {{"Tensor", "at::ones({2, 2})"}, {"bool", "true"}}, "1");
-    test(ir_if, {at::ones({2, 2}), false}, {{"Tensor", "at::ones({2, 2})"}, {"bool", "false"}}, "2");
+    test(ir_if_1, {at::ones({2, 2}), true}, {{"Tensor", "at::ones({2, 2})"}, {"bool", "true"}}, "1");
+    test(ir_if_1, {at::ones({2, 2}), false}, {{"Tensor", "at::ones({2, 2})"}, {"bool", "false"}}, "2");
 }

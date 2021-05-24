@@ -11,3 +11,4 @@ add_test(NAME exe_graph COMMAND exe_graph)
 target_link_libraries(exe_graph ultra)
 
 add_subdirectory(ir_if)
+add_subdirectory(ir_if_1)
