@@ -3,7 +3,7 @@
 const auto ir_if = R"JIT(
   def forward(self, x : Tensor, y : bool):
       if y :
-        return 2 * x
+        return x + x
       else:
         return x
 )JIT";
@@ -11,7 +11,7 @@ const auto ir_if = R"JIT(
 const auto ir_if_1 = R"JIT(
   def forward(self, x : Tensor, y : bool):
       if y :
-        return 2 + x
+        return 2 * x + x
       return torch.sum(x, 1, True)
 )JIT";
 
