@@ -49,31 +49,31 @@ const auto ir_if_4 = R"JIT(
 )JIT";
 
 const auto ir_for = R"JIT(
-    def forward(self, x : Tensor):
-        z = torch.ones([2, 2])
+    def forward(self, x : Tensor, y : Tensor):
+        z = y
         for i in [1, 2, 3, 4]:
-            z += torch.randn([2, 2])
+            z += x
         return z
 )JIT";
 
 const auto ir_for_for = R"JIT(
-    def forward(x):
-        z = torch.ones([2, 2])
+    def forward(self, x : Tensor, y : Tensor):
+        z = y
         for i in [1, 2, 3, 4]:
             for j in [1, 2, 3, 4]:
-                z -= torch.randn([2, 2]) * i * j
+                z -= x
         return z
 )JIT";
 
 const auto ir_for_for_if = R"JIT(
-    def forward(x, y):
-        z = torch.ones([2, 2])
+    def forward(self, x : Tensor, y : Tensor, b : bool):
+        z = y
         for i in [1, 2, 3, 4]:
             for j in [1, 2, 3, 4]:
-                if y :
-                    z -= torch.randn([2, 2]) * i * j
+                if b :
+                    z -= x
                 else:
-                    z += torch.randn([2, 2]) * i * j
+                    z += x
         return z
 )JIT";
 

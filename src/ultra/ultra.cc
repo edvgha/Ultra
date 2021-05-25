@@ -694,18 +694,40 @@ std::string Ultra::phiNode(Node* node, size_t level)
 
         auto max_trip_count = node -> input(0);
         auto initial_condition = node -> input(1);
+        // Define Loop outputs:
+        // given: %y_1, ..., %y_r = prim::Loop(%max_trip_count, %initial_condition, %x_1, ..., %x_r)
+        // converted : 
+        //             first declare in global scope:
+        //              x_1_type y_1;
+        //                  ...
+        //              x_r_type x_r;
+        //
+        //             assign in local scope:
+        //              y_1 = x_1;
+        //                  ...
+        //              y_r = x_r;
         for (size_t i = 2; i < node -> inputs().size(); ++i)
         {
+            {
+                // Declare in global scope
+                std::ostringstream oss;
+                oss << *(node -> input(i)) -> type() << " " << normalizeName(node -> output(i - 2) -> debugName()) << ";\n";
+                global_scope_.insert(oss.str());
+            }
+            // Assign in local scope
             oss << std::string(2 * level, ' ');
-            oss << *(node -> input(i)) -> type() << " " << normalizeName(node -> output(i - 2) -> debugName())
-                << " = " << normalizeName(node -> input(i) -> debugName()) << ";\n";
+            oss << normalizeName(node -> output(i - 2) -> debugName()) << " = " << normalizeName(node -> input(i) -> debugName()) << ";\n";
         }
+        // Define initial condition for loop
+        // bool condition = initial_condition;
         oss << std::string(2 * level, ' ');
         oss << *initial_condition -> type() << " prim_loop_condition_" << id 
             << " = " << normalizeName(initial_condition -> debugName()) << ";\n";
+        // Define loop counter
+        // int i = 0;
         oss << std::string(2 * level, ' ');
-
         oss << *max_trip_count -> type() << " " << trip_count << " = 0;\n";
+        // while(cnd and i < max_trip)
         oss << std::string(2 * level, ' ');
         oss << "while (prim_loop_condition_" << id 
             << " and " << trip_count << " < " << normalizeName(max_trip_count -> debugName())
@@ -713,19 +735,30 @@ std::string Ultra::phiNode(Node* node, size_t level)
         ++level;
         for (size_t i = 1; i < blockInputs.size(); ++i)
         {
+            // Declare block inputs
+            {
+                std::ostringstream oss;
+                oss << *blockInputs[i] -> type() << " " << normalizeName(blockInputs[i] -> debugName()) << ";\n";
+                global_scope_.insert(oss.str());
+            }
+            // Assign to block inputs
             oss << std::string(2 * level, ' ');
             oss << normalizeName(blockInputs[i] -> debugName()) << " = " << normalizeName(node -> output(i - 1) -> debugName()) << ";\n";
         }
         
         oss << blockTraversal(primLoopBlock, level);
-
+        // Assign to block outputs
         for (size_t i = 1; i < blockOutputs.size(); ++i)
         {
             oss << std::string(2 * level, ' ');
             oss << normalizeName(node -> output(i - 1) -> debugName()) << " = " << normalizeName(blockOutputs[i] -> debugName()) << ";\n";
         }
+        // Update loop condition
         oss << std::string(2 * level, ' ');
-        oss << "prim_loop_conditions_" << id << " = " << normalizeName(blockOutputs[0] -> debugName()) << ";\n";
+        oss << "prim_loop_condition_" << id << " = " << normalizeName(blockOutputs[0] -> debugName()) << ";\n";
+        // Update loop counter
+        oss << std::string(2 * level, ' ');
+        oss << trip_count << " += 1;\n";
         --level;
         oss << std::string(2 * level, ' ');
         oss << "}\n";

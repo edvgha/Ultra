@@ -98,5 +98,5 @@ void test(const std::string& name,
 
 int main(int argc, char** argv)
 {
-    test(ir_for, {at::ones({2, 2}), at::ones({2, 2})}, {{"Tensor", "at::ones({2, 2})"}, {"Tensor", "at::ones({2, 2})"}}, "1");
+    test(ir_for_for_if, {at::ones({2, 2}), at::ones({2, 2}), true}, {{"Tensor", "at::ones({2, 2})"}, {"Tensor", "at::ones({2, 2})"}, {"bool", "true"}}, "1");
 }
