@@ -29,37 +29,27 @@ const auto ir_if_3 = R"JIT(
   def forward(self, x : Tensor, y : bool, z : int):
       if z > 0 :
         if y:
-          return 2 + x
+          return x + x
         else:
-          return 1 + x
+          return x + x + x
       elif z < 0:
-        return 2 * x
+        return x + x + x + x
       else:
-        return x - 4
+        return x + x + x + x + x
 )JIT";
 
 const auto ir_if_4 = R"JIT(
-  def forward(self, x : Tensor, y : double):
-      if y > 0 :
-        return 2 + x
-      elif y < 0:
-        return 2 * x
-      else:
-        return x - 4
-)JIT";
-
-const auto ir_if_5 = R"JIT(
   def forward(self, x : Tensor, y : float):
       if y > 0 :
-        return 2 + x
+        return x + x
       elif y < 0:
-        return 2 * x
+        return x + x + x
       else:
-        return x - 4
+        return x + x + x + x
 )JIT";
 
 const auto ir_for = R"JIT(
-    def forward(x):
+    def forward(self, x : Tensor):
         z = torch.ones([2, 2])
         for i in [1, 2, 3, 4]:
             z += torch.randn([2, 2])

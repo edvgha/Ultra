@@ -10,5 +10,10 @@ add_executable(exe_graph execute_graph.cc)
 add_test(NAME exe_graph COMMAND exe_graph)
 target_link_libraries(exe_graph ultra)
 
+# Add unit test dir
 add_subdirectory(ir_if)
 add_subdirectory(ir_if_1)
+add_subdirectory(ir_if_2)
+add_subdirectory(ir_if_3)
+add_subdirectory(ir_if_4)
+#add_subdirectory(ir_for)
