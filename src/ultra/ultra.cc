@@ -337,6 +337,28 @@ std::string Ultra::primNode(Node* node, size_t level)
         oss << "};\n";
         return oss.str();
     }
+    else if (node -> kind() == prim::ListUnpack)
+    {
+        oss << std::string(2 * level, ' ');
+        for (auto i = 0; i < node -> outputs().size(); ++i) 
+        {
+            std::stringstream ss;
+            ss << type(node -> outputs()[i] -> type()) << " " << normalizeName(node -> outputs()[i] -> debugName()) << ";\n";
+            global_scope_.insert(ss.str());
+        }
+        // Loop counter
+        auto lc = normalizeName(node -> inputs()[0] -> debugName()) + "_i";
+        oss << "for (auto " << lc << " = 0; " << lc << " < " << normalizeName(node -> inputs()[0] -> debugName()) << ".size(); ++" << lc << ") {\n";
+        for (auto i = 0; i < node -> outputs().size(); ++i) 
+        {
+            oss << std::string(2 * (level + 1), ' ');
+            oss << normalizeName(node -> outputs()[i] -> debugName()) << " = " 
+                << normalizeName(node -> inputs()[0] -> debugName()) << "[" << lc << "];\n";
+        }
+        oss << std::string(2 * level, ' ');
+        oss << "}\n";
+        return oss.str();
+    }
     else if (node -> kind() == prim::RaiseException)
     {
         oss << std::string(2 * level, ' ');
@@ -489,7 +511,6 @@ std::string Ultra::atNative(Node* node, size_t level)
     //     aten::add_out(x, ...);
     // }
     std::ostringstream oss;
-
     auto outs = node -> outputs();
     std::stringstream msg;
     msg << node -> kind() . toQualString() << " has " << outs.size() << " expected 1";

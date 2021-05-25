@@ -77,22 +77,20 @@ const auto ir_for_for_if = R"JIT(
         return z
 )JIT";
 
-const auto list_construct_script = R"JIT(
-  def forward(self, a, b):
-    return [a, b]
-)JIT";
-
-const auto list_unpack_script = R"JIT(
-  def forward(self, a, b):
-    c = [a, b]
-    x, y = c
+const auto ir_list_pack_unpack = R"JIT(
+  def forward(self, a : Tensor, b : Tensor):
+    l = [a, b]
+    x, y = l
     z = x + y
     return z
 )JIT";
 
-const auto tuple_construct_script = R"JIT(
-  def forward(self, a, b):
-    return (a, b)
+const auto ir_tuple_pack_unpack = R"JIT(
+  def forward(self, a : Tensor, b : Tensor):
+    t = (a, b)
+    x, y = t
+    z = x + y
+    return z
 )JIT";
 
 const auto add_script = R"JIT(
