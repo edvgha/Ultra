@@ -39,4 +39,17 @@ fr = torch.jit.freeze(sc)
 
 # print (fr.graph)
 
-fr.save("LLD6.pt")
+#fr.save("LLD6.pt")
+
+lstm = nn.LSTMCell(10, 20, bias=True)
+sc = torch.jit.script(lstm.eval())
+fr = torch.jit.freeze(sc)
+
+print(fr.graph)
+
+# input = torch.randn(3, 10)
+# hx = torch.randn(3, 20)
+# cx = torch.randn(3, 20)
+
+# for _ in range(6):
+#     hx, cx = lstm(input, (hx, cx))

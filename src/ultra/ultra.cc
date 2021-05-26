@@ -149,7 +149,7 @@ void Ultra::graphTraversal()
     // Generate arguments for synthetic_forward
     for (size_t i = 0; i < inputs.size(); ++i)
     {
-        fwd << *inputs[i] -> type() << "& " << normalizeName(inputs[i] -> debugName());
+        fwd << type(inputs[i] -> type()) << "& " << normalizeName(inputs[i] -> debugName());
         if (i != inputs.size() - 1)
         {
             fwd << ", ";
@@ -282,8 +282,20 @@ std::string Ultra::type(const at::TypePtr& tPtr)
     {
         return "Tensor";
     }
+    else if (tPtr -> kind() == TypeKind::BoolType)
+    {
+        return "bool";
+    }
+    else if (tPtr -> kind() == TypeKind::FloatType)
+    {
+        return "float";
+    }
+    else if (tPtr -> kind() == TypeKind::IntType)
+    {
+        return "int";
+    }
     std::stringstream msg;
-    msg << "Add support for " << (*tPtr) << "\n";
+    msg << " Add support for " << (*tPtr) << "\n";
     AT_ERROR(false, msg.str());
     return "";
 }
@@ -339,24 +351,48 @@ std::string Ultra::primNode(Node* node, size_t level)
     }
     else if (node -> kind() == prim::ListUnpack)
     {
-        oss << std::string(2 * level, ' ');
+        // Declare outputs in global scope
         for (auto i = 0; i < node -> outputs().size(); ++i) 
         {
-            std::stringstream ss;
-            ss << type(node -> outputs()[i] -> type()) << " " << normalizeName(node -> outputs()[i] -> debugName()) << ";\n";
-            global_scope_.insert(ss.str());
+            auto out = node -> outputs()[i];
+            std::ostringstream oss;
+            oss << type(out -> type()) << " " << normalizeName(out -> debugName()) << ";\n";
+            global_scope_.insert(oss.str());
         }
-        // Loop counter
-        auto lc = normalizeName(node -> inputs()[0] -> debugName()) + "_i";
-        oss << "for (auto " << lc << " = 0; " << lc << " < " << normalizeName(node -> inputs()[0] -> debugName()) << ".size(); ++" << lc << ") {\n";
-        for (auto i = 0; i < node -> outputs().size(); ++i) 
+        // Unpack list (which is represented as std::vector)
+        for (auto i = 0; i < node -> outputs() . size(); ++i)
         {
-            oss << std::string(2 * (level + 1), ' ');
-            oss << normalizeName(node -> outputs()[i] -> debugName()) << " = " 
-                << normalizeName(node -> inputs()[0] -> debugName()) << "[" << lc << "];\n";
+            oss << std::string(2 * level, ' ');
+            auto out = node -> outputs()[i];
+            oss << normalizeName(out -> debugName()) << " = "
+                << normalizeName(node -> inputs()[0] -> debugName())
+                << "[" << i << "];\n";
         }
+        return oss.str();
+    }
+    else if (node -> kind() == prim::TupleUnpack)
+    {
+        // Declare outputs in global scope
+        for (auto i = 0; i < node -> outputs() . size(); ++i)
+        {
+            auto out = node -> outputs()[i];
+            std::ostringstream oss;
+            oss << type(out -> type()) << " " << normalizeName(out -> debugName()) << ";\n";
+            global_scope_.insert(oss.str());
+        }
+        // Unpack tuple (which is represented as std::vector)
         oss << std::string(2 * level, ' ');
-        oss << "}\n";
+        oss << "std::tie(";
+        for (auto i = 0; i < node -> outputs() . size(); ++i)
+        {
+            auto out = node -> outputs()[i];
+            oss << normalizeName(out -> debugName());
+            if (i < node -> outputs() . size() - 1)
+            {
+                oss << ", ";
+            }
+        }
+        oss << ") = " << normalizeName(node -> inputs()[0] -> debugName()) << ";\n";
         return oss.str();
     }
     else if (node -> kind() == prim::RaiseException)
@@ -440,6 +476,45 @@ std::string Ultra::primNode(Node* node, size_t level)
         oss << mapUltraOp(node -> kind() . toQualString());
         oss << normalizeName(node -> inputs()[1] -> debugName())  << ");\n";
         return oss.str();
+    } 
+    else if (std::string(node -> kind() . toQualString()) == "aten::len")
+    {
+        // %y is a Tensor[] type
+        // %x : int = aten::len(%y)
+        // ~~~~~~~~~~~~~~~~~~~~~~~~~
+        // Should have one input with Tensor[] type
+        if (node->inputs().size() == 1 and 
+            node -> maybeSchema() and 
+            (node -> maybeSchema() -> arguments()[0].type() -> kind() == ListType::Kind) and 
+            (node -> maybeSchema() -> returns()[0].type() -> kind() == TypeKind::IntType))
+        {
+            auto out = node -> outputs()[0];
+            auto input = node -> inputs()[0];
+            oss << std::string(2 * level, ' ');
+            oss << "int " << normalizeName(out -> debugName()) << " = "
+                << normalizeName(input -> debugName()) << ".size();\n";
+            return oss.str();
+        }
+        TORCH_CHECK(false, "Not supported variant of aten::len");
+    } else if (std::string(node -> kind() . toQualString()) == "aten::__getitem__")
+    {
+        auto element = node -> outputs()[0];
+        auto container = node -> inputs()[0];
+        auto index = node -> inputs()[1];
+        // In: %z : Tensor = aten::__getitem__(%x, %y)
+        {
+            // Declare output in global scope
+            std::stringstream oss;
+            oss << type(element -> type()) << " " << normalizeName(element -> debugName()) << ";\n";
+            global_scope_.insert(oss.str());
+        }
+
+        // Out: %z = %x[%y]
+        oss << std::string(2 * level, ' ');
+        oss << normalizeName(element -> debugName()) 
+            << " = " << normalizeName(container -> debugName())  
+            << "[" << normalizeName(index -> debugName()) << "];\n";
+        return oss.str();
     }
 
     if (node -> hasAttributes()) 
@@ -518,12 +593,15 @@ std::string Ultra::atNative(Node* node, size_t level)
     
     auto primOut = outs[0];
     
-    // Gets declaration of OP's output
-    // For example if %a = aten::add(....) then
-    // in the global scope we will generate: "Tensor g_a;"
-    std::stringstream ss;
-    ss << *primOut -> type() << " " << normalizeName(primOut -> debugName()) << ";\n";
-    global_scope_.insert(ss.str());
+    {
+        // Gets declaration of OP's outputs in global scope
+        // For example if %a = aten::add(....) then
+        // in the global scope we will generate: "Tensor g_a;"
+        std::stringstream oss;
+        oss << type(primOut -> type()) << " " << normalizeName(primOut -> debugName()) << ";\n";
+        global_scope_.insert(oss.str());
+        // valod
+    }
 
     // Gets OP's C++ equivalent API
     oss << std::string(2 * level, ' ');
@@ -732,7 +810,7 @@ std::string Ultra::phiNode(Node* node, size_t level)
             {
                 // Declare in global scope
                 std::ostringstream oss;
-                oss << *(node -> input(i)) -> type() << " " << normalizeName(node -> output(i - 2) -> debugName()) << ";\n";
+                oss << type(node -> input(i) -> type()) << " " << normalizeName(node -> output(i - 2) -> debugName()) << ";\n";
                 global_scope_.insert(oss.str());
             }
             // Assign in local scope
@@ -759,7 +837,7 @@ std::string Ultra::phiNode(Node* node, size_t level)
             // Declare block inputs
             {
                 std::ostringstream oss;
-                oss << *blockInputs[i] -> type() << " " << normalizeName(blockInputs[i] -> debugName()) << ";\n";
+                oss << type(blockInputs[i] -> type()) << " " << normalizeName(blockInputs[i] -> debugName()) << ";\n";
                 global_scope_.insert(oss.str());
             }
             // Assign to block inputs

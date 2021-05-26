@@ -28,5 +28,6 @@ add_subdirectory(testM)
 
 add_subdirectory(DeepAndWide)
 add_subdirectory(LLD6)
+add_subdirectory(LSTM)
 add_subdirectory(Resnet18)
 add_subdirectory(Resnet50)
