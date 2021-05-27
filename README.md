@@ -47,12 +47,6 @@ Machine :
  - Processor 3.2 GHz 6-Core Intel Core i7
  - Memory 32 GB 2667 MHz DDR4
 
-## Install 
-TODO
-
-## Getting Started 
-TODO
-
 ## Limitations
 
 Currently build only tested on macOS Big Sur Version 11.3 and supported libtorch library version is 1.7.1
