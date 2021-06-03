@@ -14,7 +14,7 @@ into C++ which allow to reduce DL framework overhead.
 ## Build
 
 From project root do : 
-1. For the first time fetch and extract libtorch in 'ext' directory by running **get_libtorch.sh**
+1. For the first time fetch and extract libtorch in 'ext' directory by running **./scripts/get_libtorch.sh**
 2. **mkdir build ; cd build**
 3. **cmake ..**
 4. **make -j**
