@@ -11,7 +11,7 @@ c10::IValue pytorch_jit_forward(const Tensor& input,
                                 const Tensor& b_ih, 
                                 const Tensor& b_hh)
 {
-   auto module = torch::jit::load("../LSTM/LSTM.pt");
+   auto module = torch::jit::load("../Demo_LSTM/LSTM.pt");
    return module.forward({input, x, w_ih, w_hh, b_ih, b_hh});
 }
 

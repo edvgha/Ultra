@@ -600,7 +600,6 @@ std::string Ultra::atNative(Node* node, size_t level)
         std::stringstream oss;
         oss << type(primOut -> type()) << " " << normalizeName(primOut -> debugName()) << ";\n";
         global_scope_.insert(oss.str());
-        // valod
     }
 
     // Gets OP's C++ equivalent API

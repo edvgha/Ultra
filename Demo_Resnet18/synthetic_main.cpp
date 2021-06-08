@@ -6,7 +6,7 @@
 
 c10::IValue pytorch_jit_forward(const std::vector<c10::IValue>& inputs)
 {
-   auto module = torch::jit::load("../Resnet18/resnet18.pt");
+   auto module = torch::jit::load("../Demo_Resnet18/resnet18.pt");
    module.eval();
    return module.forward(inputs);
 }

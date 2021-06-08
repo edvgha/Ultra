@@ -6,30 +6,25 @@
 
 c10::IValue pytorch_jit_forward(const std::vector<c10::IValue>& inputs)
 {
-   auto module = torch::jit::load("../DeepAndWide/DeepAndWide.pt");
+   auto module = torch::jit::load("../Demo_LLD6/LLD6.pt");
    return module.forward(inputs);
 }
 
 int main()
 {
-   long long batch_size = 64;
-   long long embedding_size = 32;
-   long long num_features = 50;
+   long long batch_size = 32;
+   long long num_features = 128;
 
-   Tensor gad_emb_packed_1 = rand({batch_size, 1, embedding_size});
-   Tensor guser_emb_1 = rand({batch_size, 1, embedding_size});
-   Tensor gwide_1 = rand({batch_size, num_features});
+   Tensor input = rand({batch_size, num_features});
    // Two times to execute 'else' branch too
    {
       // Run Generated 'forward' function
-      Tensor synthetic_out;
-      std::tie(synthetic_out) = synthetic_forward(gad_emb_packed_1, guser_emb_1, gwide_1);
+      Tensor synthetic_out = synthetic_forward(input);
       auto actual_ptr = synthetic_out.data_ptr<float>();
       // Run PyTorch JIT 
-      IValue pytorch_jit_out = pytorch_jit_forward({gad_emb_packed_1, guser_emb_1, gwide_1});
-      auto expected = pytorch_jit_out.toTuple()->elements()[0].toTensor();
+      IValue pytorch_jit_out = pytorch_jit_forward({input});
+      auto expected = pytorch_jit_out.toTensor();
       auto expected_ptr = expected.data_ptr<float>();
-      
 
       std::stringstream msg;
       msg << "Number of elements of expected and actual outputs don't match\n";
@@ -48,14 +43,12 @@ int main()
    }
    {
       // Run Generated 'forward' function
-      Tensor synthetic_out;
-      std::tie(synthetic_out) = synthetic_forward(gad_emb_packed_1, guser_emb_1, gwide_1);
+      Tensor synthetic_out = synthetic_forward(input);
       auto actual_ptr = synthetic_out.data_ptr<float>();
       // Run PyTorch JIT 
-      IValue pytorch_jit_out = pytorch_jit_forward({gad_emb_packed_1, guser_emb_1, gwide_1});
-      auto expected = pytorch_jit_out.toTuple()->elements()[0].toTensor();
+      IValue pytorch_jit_out = pytorch_jit_forward({input});
+      auto expected = pytorch_jit_out.toTensor();
       auto expected_ptr = expected.data_ptr<float>();
-      
 
       std::stringstream msg;
       msg << "Number of elements of expected and actual outputs don't match\n";
@@ -76,7 +69,7 @@ int main()
    auto syn_start = std::chrono::high_resolution_clock::now();
    for (size_t i = 0; i < ITERS; ++i)
    {
-      synthetic_forward(gad_emb_packed_1, guser_emb_1, gwide_1);
+      synthetic_forward(input);
    }
    auto syn_end = std::chrono::high_resolution_clock::now();
    auto syn_dur = std::chrono::duration_cast<std::chrono::microseconds>(syn_end - syn_start).count();
@@ -84,7 +77,7 @@ int main()
    auto jit_start = std::chrono::high_resolution_clock::now();
    for (size_t i = 0; i < ITERS; ++i)
    {
-      pytorch_jit_forward({gad_emb_packed_1, guser_emb_1, gwide_1});
+      pytorch_jit_forward({input});
    }
    auto jit_end = std::chrono::high_resolution_clock::now();
    auto jit_dur = std::chrono::duration_cast<std::chrono::microseconds>(jit_end - jit_start).count();

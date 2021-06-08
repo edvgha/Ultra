@@ -1,4 +1,4 @@
-set(PROJECT_WORKSPACE ${PROJECT_SOURCE_DIR}/Resnet50)
+set(PROJECT_WORKSPACE ${PROJECT_SOURCE_DIR}/Demo_LLD6)
 
 add_custom_command(
     OUTPUT ${PROJECT_WORKSPACE}/forward.h ${PROJECT_WORKSPACE}/forward.cpp
@@ -11,5 +11,5 @@ add_custom_command(
 set_source_files_properties(${PROJECT_WORKSPACE}/forward.h PROPERTIES GENERATED TRUE)
 set_source_files_properties(${PROJECT_WORKSPACE}/forward.cpp PROPERTIES GENERATED TRUE)
 
-add_executable(synthetic_run_res50 synthetic_main.cpp ${PROJECT_WORKSPACE}/forward.h ${PROJECT_WORKSPACE}/forward.cpp)
-target_link_libraries(synthetic_run_res50 "${TORCH_LIBRARIES}")
+add_executable(synthetic_run_lld6 synthetic_main.cpp ${PROJECT_WORKSPACE}/forward.h ${PROJECT_WORKSPACE}/forward.cpp)
+target_link_libraries(synthetic_run_lld6 "${TORCH_LIBRARIES}")

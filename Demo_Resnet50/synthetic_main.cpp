@@ -2,20 +2,19 @@
 #include <torch/csrc/jit/serialization/import.h>
 #include <chrono>
 
-#define ITERS 5000
+#define ITERS 50
 
 c10::IValue pytorch_jit_forward(const std::vector<c10::IValue>& inputs)
 {
-   auto module = torch::jit::load("../LLD6/LLD6.pt");
+   auto module = torch::jit::load("../Demo_Resnet50/resnet50.pt");
+   module.eval();
    return module.forward(inputs);
 }
 
 int main()
 {
-   long long batch_size = 32;
-   long long num_features = 128;
-
-   Tensor input = rand({batch_size, num_features});
+   long long batch_size = 1;
+   Tensor input = rand({batch_size, 3, 64, 64});
    // Two times to execute 'else' branch too
    {
       // Run Generated 'forward' function
@@ -25,10 +24,11 @@ int main()
       IValue pytorch_jit_out = pytorch_jit_forward({input});
       auto expected = pytorch_jit_out.toTensor();
       auto expected_ptr = expected.data_ptr<float>();
-
+      
       std::stringstream msg;
       msg << "Number of elements of expected and actual outputs don't match\n";
       TORCH_CHECK(expected.numel() == synthetic_out.numel(),  msg.str());
+
       for (size_t i = 0; i < expected.numel(); ++i) 
       {
          if (std::abs(expected_ptr[i] - actual_ptr[i]) >= 0.0001) 
@@ -49,10 +49,11 @@ int main()
       IValue pytorch_jit_out = pytorch_jit_forward({input});
       auto expected = pytorch_jit_out.toTensor();
       auto expected_ptr = expected.data_ptr<float>();
-
+      
       std::stringstream msg;
       msg << "Number of elements of expected and actual outputs don't match\n";
       TORCH_CHECK(expected.numel() == synthetic_out.numel(),  msg.str());
+
       for (size_t i = 0; i < expected.numel(); ++i) 
       {
          if (std::abs(expected_ptr[i] - actual_ptr[i]) >= 0.0001) 
