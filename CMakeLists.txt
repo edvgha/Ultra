@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.18.2 FATAL_ERROR)
+cmake_minimum_required(VERSION 3.13.2 FATAL_ERROR)
 project(Ultra CXX)
 
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/ext/libtorch)

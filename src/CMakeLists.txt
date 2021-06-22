@@ -1,5 +1,5 @@
 add_subdirectory(ultra)
-add_subdirectory(out)
+#add_subdirectory(opt)
 
 set(SOURCE_FILES synthetic_forward.cc)
 
