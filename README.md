@@ -1,8 +1,6 @@
 <a name="readme-top"></a>
 
-# Ultra
-
-# Graph compiler for the fast inference (without PyTorch interpreter cost)
+# Ultra: Graph compiler for the fast inference (without PyTorch interpreter cost)
 
 The main goal of Ultra is to implement the zero-overhead principle
 by compiling dynamically specified data flow PyTorch JIT IR graph 
