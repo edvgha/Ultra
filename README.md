@@ -1,6 +1,7 @@
 <a name="readme-top"></a>
 
-# Ultra: Graph compiler for the fast inference (without PyTorch interpreter cost)
+# Ultra
+Graph compiler for the fast inference (without PyTorch interpreter cost)
 
 The main goal of Ultra is to implement the zero-overhead principle
 by compiling dynamically specified data flow PyTorch JIT IR graph 
@@ -52,3 +53,5 @@ Machine :
 ## Limitations
 
 Currently build only tested on macOS Big Sur Version 11.3 and supported libtorch library version is 1.7.1
+
+<p align="right">(<a href="#readme-top">back to top</a>)</p>
